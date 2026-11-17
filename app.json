@@ -21,7 +21,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -30,11 +30,19 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#0C0A18",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "image": "./assets/images/splash-logo.png",
+          "imageWidth": 200
         }
       ],
       "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#7449C2"
+        }
+      ],
+      "expo-dev-client",
       [
         "expo-localization",
         {
