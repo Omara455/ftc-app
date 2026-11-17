@@ -2,23 +2,35 @@
 // JSON shapes as the Laravel API (docs/API.md), with a small delay.
 //
 // Handy for testing states by hand:
-//   password `ftc-portal`        → signs in
-//   any other password           → 422 (wrong credentials); 5 failures in a minute → 429
+//   password `ftc-portal`         → signs in
+//   any other password            → 422 (wrong credentials); 5 failures in a minute → 429
 //   email starting with `offline` → network error
+//   device offline (NetInfo)      → every request fails with a network error
+//   EXPO_PUBLIC_MOCK_SCENARIO=empty → no tasks at all (screen 15)
+//   EXPO_PUBLIC_MOCK_SCENARIO=error → GET /tasks* answers 500 (error state)
+//   EXPO_PUBLIC_MOCK_DELAY=ms     → response delay (default 450)
+import { onlineManager } from '@tanstack/react-query';
+
 import { meFixture, MOCK_PASSWORD } from '@/mocks/me';
+import { emptyTasksFixture, historyFixture, taskFixture, tasksFixture } from '@/mocks/tasks';
 
 import { ApiError } from './errors';
 
 type MockResponse = { status: number; json: unknown };
 
 const MOCK_TOKEN = 'mock-token';
-const DELAY = 450;
+const DELAY = Number(process.env.EXPO_PUBLIC_MOCK_DELAY ?? 450);
+const SCENARIO = process.env.EXPO_PUBLIC_MOCK_SCENARIO ?? 'default';
 const failedLogins: number[] = [];
 
 const ok = (json: unknown = null, status = 200): MockResponse => ({ status, json });
 const unauthenticated = (): MockResponse => ({
   status: 401,
   json: { message: 'Unauthenticated.' },
+});
+const notFound = (route: string): MockResponse => ({
+  status: 404,
+  json: { message: `Mock has no route for ${route}` },
 });
 
 export async function mockFetch(
@@ -28,9 +40,14 @@ export async function mockFetch(
   token: string | null,
 ): Promise<MockResponse> {
   await new Promise((r) => setTimeout(r, DELAY));
-  const b = (body ?? {}) as Record<string, string>;
-  const route = `${method} ${path.split('?')[0]}`;
+  if (!onlineManager.isOnline()) throw new ApiError('network', 'Mock: device offline');
 
+  const b = (body ?? {}) as Record<string, string>;
+  const [pathname, query = ''] = path.split('?');
+  const route = `${method} ${pathname}`;
+  const params = new URLSearchParams(query);
+
+  // Public routes
   switch (route) {
     case 'POST /auth/login': {
       if (b.email?.startsWith('offline')) throw new ApiError('network', 'Mock network error');
@@ -52,11 +69,34 @@ export async function mockFetch(
     case 'POST /auth/forgot':
       if (b.email?.startsWith('offline')) throw new ApiError('network', 'Mock network error');
       return ok(null, 204);
-    case 'POST /auth/logout':
-      return token === MOCK_TOKEN ? ok(null, 204) : unauthenticated();
-    case 'GET /me':
-      return token === MOCK_TOKEN ? ok(meFixture) : unauthenticated();
-    default:
-      return { status: 404, json: { message: `Mock has no route for ${route}` } };
   }
+
+  // Everything else needs the token
+  if (token !== MOCK_TOKEN) return unauthenticated();
+  if (SCENARIO === 'error' && pathname.startsWith('/tasks')) {
+    return { status: 500, json: { message: 'Mock server error' } };
+  }
+
+  switch (route) {
+    case 'POST /auth/logout':
+      return ok(null, 204);
+    case 'GET /me':
+      return ok(
+        SCENARIO === 'empty'
+          ? { ...meFixture, termHours: 0, pendingHours: 0, tasksDone: 0 }
+          : meFixture,
+      );
+    case 'GET /tasks':
+      return ok(SCENARIO === 'empty' ? emptyTasksFixture() : tasksFixture());
+    case 'GET /tasks/history':
+      return ok(historyFixture(params.get('scope') === 'all' ? 'all' : 'term'));
+  }
+
+  const taskMatch = /^GET \/tasks\/(\d+)$/.exec(route);
+  if (taskMatch) {
+    const task = taskFixture(Number(taskMatch[1]));
+    return task ? ok(task) : { status: 404, json: { message: 'Not found.' } };
+  }
+
+  return notFound(route);
 }

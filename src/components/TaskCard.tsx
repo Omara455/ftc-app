@@ -20,10 +20,12 @@ type MyTaskCardProps = {
   state: TaskState;
   hours: string;
   footer?: MyTaskFooter;
+  /** Offline (screen 19): chip, hours and title only, no chevron. */
+  compact?: boolean;
   onPress?: () => void;
 };
 
-export function MyTaskCard({ title, state, hours, footer, onPress }: MyTaskCardProps) {
+export function MyTaskCard({ title, state, hours, footer, compact, onPress }: MyTaskCardProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -43,7 +45,7 @@ export function MyTaskCard({ title, state, hours, footer, onPress }: MyTaskCardP
           </Txt>
         </View>
         <Txt variant="cardTitle">{title}</Txt>
-        {footer?.kind === 'deadline' ? (
+        {compact ? null : footer?.kind === 'deadline' ? (
           <View style={styles.inlineRow}>
             <Clock size={14} color={hue.amber.base} strokeWidth={2} />
             <Txt size={12.5} weight="semibold" color={hue.amber.base}>
@@ -74,7 +76,7 @@ export function MyTaskCard({ title, state, hours, footer, onPress }: MyTaskCardP
           </Txt>
         ) : null}
       </View>
-      <ChevronLeft size={18} color={color.inkMuted} strokeWidth={2} />
+      {compact ? null : <ChevronLeft size={18} color={color.inkMuted} strokeWidth={2} />}
     </Pressable>
   );
 }
@@ -88,7 +90,7 @@ type AvailableTaskCardProps = {
   /** Shared task: «مشتركة» chip + committee names («التقنية · الإعلامية»). */
   shared?: { committees: string };
   /** Single-committee task: committee chip. */
-  committee?: string;
+  committee?: { name: string; key: string };
   when?: string;
   where?: string;
   people?: { gender: 'male' | 'female' }[];
@@ -127,7 +129,7 @@ export function AvailableTaskCard({
             </Txt>
           </View>
         ) : committee ? (
-          <CommitteeChip label={committee} />
+          <CommitteeChip label={committee.name} committeeKey={committee.key} />
         ) : (
           <View />
         )}

@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { setToken, setUnauthorizedHandler } from '@/api/client';
 import { authApi } from '@/api/endpoints';
-import { queryClient, queryKeys } from '@/api/queryClient';
+import { persister, queryClient, queryKeys } from '@/api/queryClient';
 import { flags } from '@/config/flags';
 import { keys, storage } from '@/lib/storage';
 
@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     await storage.remove(keys.token);
     queryClient.clear();
+    await persister.removeClient(); // the offline cache must not outlive the session
     setStatus('signedOut');
   }, []);
 

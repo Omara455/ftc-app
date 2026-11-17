@@ -3,6 +3,7 @@
 //
 //   node scripts/shot.mjs app /dev/kit [/tasks …] [--full] [--no-build]
 //       Exports the web build, serves it, and screenshots each route at 390×844 (RTL).
+//       --offline cuts the network after load (cached data + offline banner).
 //       --signed-in starts with the mock session token (to reach screens behind the auth gate).
 //       --fill="label=value" types into a field first (repeatable).
 //       --click="نص" taps an element by its text before the shot (open a sheet, a tab…).
@@ -118,7 +119,11 @@ async function shoot(page, url, file) {
   const isDesign = url.includes('/__design/');
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(400); // let entry animations settle
+  // let entry animations and the mock API (450 ms) settle
+  await page.waitForTimeout(isDesign ? 400 : 1300);
+  // --wait=ms: extra settle time (e.g. to let query retries end on the error state)
+  const extra = process.argv.find((a) => a.startsWith('--wait='));
+  if (extra && !isDesign) await page.waitForTimeout(Number(extra.slice(7)));
   // --click="label" taps an element by its visible text first (e.g. to open a sheet).
   // --fill="البريد الإلكتروني=a@b.c" types into the field with that label (repeatable).
   // Fills and clicks drive the app only; artboards are static references.
@@ -131,7 +136,14 @@ async function shoot(page, url, file) {
     await page.getByText(click.slice('--click='.length), { exact: true }).first().click();
     await page.waitForTimeout(1200); // covers the mock API delay
   }
+  // --offline: load online (so the query cache fills), then cut the network (screen 19).
+  if (flags.has('--offline') && !isDesign) {
+    await page.context().setOffline(true);
+    await page.waitForTimeout(800);
+  }
   if (flags.has('--debug')) {
+    const online = await page.evaluate(() => navigator.onLine);
+    console.log(`  navigator.onLine: ${online}`);
     const text = await page.evaluate(() => document.body.innerText);
     console.log(`  text: ${JSON.stringify(text.slice(0, 200))}`);
   }
@@ -146,6 +158,7 @@ async function shoot(page, url, file) {
     }
   }
   await page.screenshot({ path: file, fullPage: full });
+  if (flags.has('--offline')) await page.context().setOffline(false);
   console.log(`✓ ${file}`);
   return file;
 }

@@ -246,7 +246,7 @@ function KitPage() {
           />
           <AvailableTaskCard
             title={kit.available2.title}
-            committee={kit.available2.committee}
+            committee={{ name: kit.available2.committee, key: 'tech' }}
             hours={hoursLabel(kit.available2.hours)}
           />
         </Section>
@@ -411,7 +411,7 @@ function KitPage() {
 
         {/* ── Offline ─────────────────────────────── */}
         <Section title={kit.sections.offline}>
-          <OfflineBanner lastUpdatedAgo="10 دقائق" onRetry={() => {}} />
+          <OfflineBanner lastUpdatedAgo="قبل 10 دقائق" onRetry={() => {}} />
           <LockedNotice />
         </Section>
 

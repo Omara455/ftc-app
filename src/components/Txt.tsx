@@ -2,6 +2,12 @@ import { StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 
 import { color as palette, font, type, type FontWeight, type TypeVariant } from '@/theme/tokens';
 
+/**
+ * Cairo's default line height (CSS `normal`). The artboards leave line-height unset on
+ * most text, so a custom `size` without `leading` uses this to match them.
+ */
+const CAIRO_NORMAL = 1.875;
+
 export type TxtProps = TextProps & {
   variant?: TypeVariant;
   /** Overrides the variant's weight. Cairo needs one family per weight. */
@@ -29,7 +35,7 @@ export function Txt({
   const lineHeight = leading
     ? Math.round(fontSize * leading)
     : size
-      ? Math.round(size * (v.lineHeight / v.fontSize))
+      ? Math.round(size * CAIRO_NORMAL)
       : v.lineHeight;
   return (
     <Text

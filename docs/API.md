@@ -60,15 +60,21 @@ interface Me {
   achievements: Achievement[]; recentActivity: { type: string; text: string; at: string }[];
 }
 interface CommitteeRef { id: number; key: string; name: string }
+interface PersonRef { id: number; name: string; gender: Gender; role: string }
 interface TaskSummary {
   id: number; title: string; description: string; committees: CommitteeRef[]; shared: boolean;
   hours: number; deadline: string; myState: TaskState | null; returnNote?: string | null;
   joinedCount: number; capacity: number | null;
+  // M3 proposal (moved up from Task so cards can show them):
+  location: string | null; timeFrom: string | null; timeTo: string | null; // "HH:mm" 24h
+  creator: PersonRef;               // M3 proposal: + gender (avatar ring, «أنشأها/أنشأتها»)
+  submittedAt: string | null;       // M3 proposal: «سلّمتها قبل ساعتين»
+  people: { id: number; gender: Gender }[]; // M3 proposal: avatar stack on cards
 }
 interface Task extends TaskSummary {
-  location: string | null; timeFrom: string | null; timeTo: string | null;
   contact: { name: string; phone: string } | null;
-  creator: { id: number; name: string; role: string };
+  createdAt: string;                // M3 proposal: «… · قبل يومين»
+  myJoinedAt: string | null;        // M3 proposal: stepper step 1 date
   attachments: FileRef[];
   people: { id: number; name: string; gender: Gender; me: boolean; state: TaskState }[];
   mySubmission: { note: string; link: string | null; files: FileRef[]; submittedAt: string;
@@ -85,3 +91,5 @@ interface Notification { id: number; type: 'task_returned'|'task_new'|'deadline'
 ```
 
 **Privacy:** `RankRow.hours` exists only on `/leaderboard`. `MemberCard` never includes hours.
+
+**M3 proposals (need the portal team's OK):** the task screens show data the original contract didn't carry. `TaskSummary` gains `location`, `timeFrom`, `timeTo`, `creator` (with `gender`), `submittedAt` and `people` (id + gender only); `Task` gains `createdAt` and `myJoinedAt`. The app's mocks already return them.
