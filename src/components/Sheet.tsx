@@ -7,7 +7,7 @@ import {
 import type { LucideIcon } from 'lucide-react-native';
 import { forwardRef, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenInsets } from '@/lib/insets';
 
 import { Txt } from '@/components/Txt';
 import { color, radius, shadow, tint } from '@/theme/tokens';
@@ -29,7 +29,7 @@ export const Sheet = forwardRef<SheetRef, Props>(function Sheet(
   { children, accessibilityLabel, onDismiss },
   ref,
 ) {
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const backdrop = useCallback(
     (p: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -54,7 +54,10 @@ export const Sheet = forwardRef<SheetRef, Props>(function Sheet(
       keyboardBlurBehavior="restore"
     >
       <BottomSheetView
-        style={[styles.content, { paddingBottom: Math.max(34, insets.bottom + 10) }]}
+        style={[
+          styles.content,
+          { paddingBottom: Math.max(34, insets.bottom) /* design: 34 incl. the home indicator */ },
+        ]}
       >
         {children}
       </BottomSheetView>

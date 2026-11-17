@@ -1,6 +1,6 @@
 import { SquareCheck, Trophy, User, Users, type LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenInsets } from '@/lib/insets';
 
 import { BottomFade } from '@/components/BottomFade';
 import { Txt } from '@/components/Txt';
@@ -26,7 +26,7 @@ type Props = {
 
 /** Floating bar: inset 16, 24 from the bottom, 66 tall, radius 22, glass fill. */
 export function TabBar({ active, onPress, floating = true }: Props) {
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const bar = (
     <View accessibilityRole="tablist" accessibilityLabel={ar.nav.label} style={styles.bar}>
       {TABS.map(({ key, label, icon: Icon }) => {

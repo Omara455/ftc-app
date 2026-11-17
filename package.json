@@ -54,7 +54,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "shot": "node scripts/shot.mjs"
+    "shot": "node scripts/shot.mjs",
+    "smoke": "node scripts/smoke-auth.mjs"
   },
   "private": true
 }

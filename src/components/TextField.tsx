@@ -1,13 +1,14 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { Txt } from '@/components/Txt';
 import { color, font, radius, tint } from '@/theme/tokens';
 
 type Props = Omit<TextInputProps, 'style'> & {
   label?: string;
-  error?: string;
+  /** Message under the field, or `true` for the red border only (screen 02's password). */
+  error?: string | boolean;
   /** Icon at the start (right in RTL). Turns accent while focused. */
   icon?: LucideIcon;
   /** Element at the end (left in RTL), e.g. the password eye toggle. */
@@ -20,6 +21,7 @@ type Props = Omit<TextInputProps, 'style'> & {
   onSurface?: boolean;
   /** Preview only (/dev/kit): render the focused style without focus. */
   forceFocus?: boolean;
+  ref?: React.Ref<React.ComponentRef<typeof TextInput>>;
 };
 
 export function TextField({
@@ -31,6 +33,7 @@ export function TextField({
   height = 50,
   onSurface,
   forceFocus,
+  ref,
   onFocus,
   onBlur,
   secureTextEntry,
@@ -43,7 +46,7 @@ export function TextField({
   return (
     <View style={styles.wrap}>
       {label ? (
-        <Txt variant="meta" weight="semibold" color={color.inkSecondary}>
+        <Txt variant="meta" weight="semibold" leading={1.875} color={color.inkSecondary}>
           {label}
         </Txt>
       ) : null}
@@ -61,9 +64,14 @@ export function TextField({
           ]}
         >
           {Icon ? (
-            <Icon size={20} color={focused ? color.accent : color.inkSoft} strokeWidth={1.8} />
+            <Icon
+              size={20}
+              color={error ? color.danger : focused ? color.accent : color.inkSoft}
+              strokeWidth={1.8}
+            />
           ) : null}
           <TextInput
+            ref={ref}
             {...input}
             secureTextEntry={secureTextEntry}
             accessibilityLabel={input.accessibilityLabel ?? label}
@@ -81,12 +89,13 @@ export function TextField({
               styles.input,
               ltr && styles.ltr,
               secureTextEntry && input.value ? styles.secure : null,
+              Platform.OS === 'web' && webNoOutline,
             ]}
           />
           {trailing}
         </View>
       </View>
-      {error ? (
+      {typeof error === 'string' && error ? (
         <Txt variant="meta" size={12.5} weight="regular" color={color.dangerText}>
           {error}
         </Txt>
@@ -129,3 +138,6 @@ const styles = StyleSheet.create({
   ltr: { textAlign: 'left', writingDirection: 'ltr' },
   secure: { letterSpacing: 2 },
 });
+
+// Web only: the field draws its own focus ring, so hide the browser's outline.
+const webNoOutline = { outlineStyle: 'none' } as object;

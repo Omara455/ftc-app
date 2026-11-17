@@ -1,11 +1,18 @@
 import { Lock, type LucideIcon } from 'lucide-react-native';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { Txt } from '@/components/Txt';
 import { color, hue, radius, shadow, tint } from '@/theme/tokens';
 
 export type ButtonVariant =
-  'primary' | 'secondary' | 'destructive' | 'ghost' | 'link' | 'dangerLink';
+  'primary' | 'secondary' | 'destructive' | 'dangerSoft' | 'ghost' | 'link' | 'dangerLink';
 
 type Props = {
   label: string;
@@ -20,6 +27,8 @@ type Props = {
   /** Offline lock: disabled, with a lock icon. */
   locked?: boolean;
   disabled?: boolean;
+  /** Request in flight: spinner instead of the trailing icon, presses ignored. */
+  loading?: boolean;
   /** Secondary on a page (surface fill) instead of inside a sheet (bg fill). */
   onSurface?: boolean;
   accessibilityLabel?: string;
@@ -40,6 +49,14 @@ const looks = {
     fg: color.dangerText,
     border: tint(hue.red.base, 0.6),
     size: 16,
+    weight: 'bold',
+  },
+  // Settings «تسجيل الخروج» row: softer fill, 52 tall, radius 18
+  dangerSoft: {
+    bg: tint(hue.red.base, 0.08),
+    fg: color.dangerText,
+    border: tint(hue.red.base, 0.3),
+    size: 15,
     weight: 'bold',
   },
   ghost: {
@@ -68,6 +85,7 @@ export function Button({
   trailingIcon: Trailing,
   locked,
   disabled,
+  loading,
   onSurface,
   accessibilityLabel,
   style,
@@ -75,6 +93,7 @@ export function Button({
   const look = looks[variant];
   const inline = variant === 'link' || variant === 'dangerLink';
   const isDisabled = disabled || locked;
+  const busy = !!loading;
   const sm = size === 'sm';
   const fg = locked ? color.inkSoft : look.fg;
   const LeadIcon = locked ? Lock : Icon;
@@ -82,15 +101,17 @@ export function Button({
   return (
     <Pressable
       onPress={onPress}
-      disabled={isDisabled}
+      disabled={isDisabled || busy}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled: isDisabled }}
+      accessibilityState={{ disabled: isDisabled, busy }}
       hitSlop={inline || sm ? 4 : undefined}
       style={({ pressed }) => [
         styles.base,
         inline ? styles.inline : sm ? styles.sm : variant === 'ghost' ? styles.ghost : styles.lg,
         { backgroundColor: look.bg },
+        variant === 'dangerSoft' && styles.dangerSoft,
+        Trailing && styles.trailingGap,
         variant === 'secondary' && onSurface && { backgroundColor: color.surface },
         look.border != null && {
           borderColor: look.border,
@@ -107,7 +128,11 @@ export function Button({
       <Txt variant="body" size={sm ? 14 : look.size} weight={sm ? 'bold' : look.weight} color={fg}>
         {label}
       </Txt>
-      {Trailing ? <Trailing size={18} color={fg} strokeWidth={2} /> : null}
+      {busy ? (
+        <ActivityIndicator size="small" color={fg} />
+      ) : Trailing ? (
+        <Trailing size={18} color={fg} strokeWidth={2} />
+      ) : null}
     </Pressable>
   );
 }
@@ -148,6 +173,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   lg: { height: 54, borderRadius: radius.md },
+  dangerSoft: { height: 52, borderRadius: radius.card },
+  trailingGap: { gap: 10 },
   ghost: { height: 48, borderRadius: radius.md },
   sm: { height: 40, paddingHorizontal: 20, borderRadius: 12, alignSelf: 'flex-start' },
   inline: { minHeight: 40, alignSelf: 'flex-start' },

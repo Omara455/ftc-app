@@ -17,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenInsets } from '@/lib/insets';
 
 import { Avatar } from '@/components/Avatar';
 import { Button, IconButton } from '@/components/Button';
@@ -67,7 +67,7 @@ export default function Kit() {
 }
 
 function KitPage() {
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const router = useRouter();
   const sheet = useRef<SheetRef>(null);
   const [bio, setBio] = useState(true);
