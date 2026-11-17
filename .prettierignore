@@ -4,3 +4,5 @@ dist/
 assets/
 package-lock.json
 *.md
+design/
+.screenshots/

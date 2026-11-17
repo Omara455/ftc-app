@@ -6,13 +6,14 @@ import {
   Cairo_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/cairo';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
-import { I18nManager, StyleSheet } from 'react-native';
+import { I18nManager, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -22,6 +23,12 @@ import { color } from '@/theme/tokens';
 // plugin (app.json), so layout is correct from the very first frame.
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
+// Web (used only for fast screenshot checks): RTL comes from the document direction.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  document.documentElement.dir = 'rtl';
+  document.documentElement.lang = 'ar';
+  document.body.style.backgroundColor = color.bg;
+}
 
 SplashScreen.preventAutoHideAsync();
 SystemUI.setBackgroundColorAsync(color.bg);
@@ -45,16 +52,20 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <GestureHandlerRootView style={styles.root}>
+    // `dir` is a react-native-web prop: it makes start/end resolve right-to-left on web.
+    // Native ignores it (RTL there comes from I18nManager + the expo-localization plugin).
+    <GestureHandlerRootView style={styles.root} {...({ dir: 'rtl' } as object)}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <StatusBar style="light" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: color.bg },
-            }}
-          />
+          <BottomSheetModalProvider>
+            <StatusBar style="light" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: color.bg },
+              }}
+            />
+          </BottomSheetModalProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

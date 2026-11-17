@@ -60,6 +60,11 @@ Tab order in RTL from the right: **المهام · المجتمع · الصدا�
 
 ## Working style
 - Build in the order of `docs/PLAN.md`. Finish one milestone, run it, compare it side by side with the design artboards, then move on.
-- Before you call a screen done, screenshot it in the iOS simulator at 390×844 and compare it with the matching artboard in the design. Spacing, colour, copy and icon have to match.
+- Git: one branch per milestone (`m1-design-system`, `m2-auth-shell`, …) and a PR into `main` so CI runs before it's merged.
+- **Design checks happen in two loops.** Spacing, colour, copy and icons have to match the artboards.
+  1. **Fast loop (every screen, before you call it done): Expo web at 390×844, RTL.** Run `npm run shot -- compare <route> <Artboard>`, for example `npm run shot -- compare tasks Tasks`. It exports the web build, screenshots the route, renders the artboard from `design/artboards/` and saves both side by side in `.screenshots/`. Open the image and fix any difference. Other modes: `app <route…>`, `design <Artboard…>`, and the flags `--height=N` (tall capture, sliced into 844-pt pages), `--click="نص"` (tap by text first, e.g. to open a sheet), `--no-build` and `--debug`. Write routes without the leading slash, because Git Bash rewrites `/dev/kit`. `design/artboards/` is a local, git-ignored copy of the canvas `project/*.dc.html` files. If it's missing or the design changed, read them again from the design artifact.
+  2. **Device check (end of every milestone): an Android development build** (EAS `development` profile or the Android Studio emulator), to test native RTL, fonts, SVGs, sheets and gestures, which web can't prove. The steps are in `docs/DEVICE.md`.
+- `/dev/kit` renders every component. It's available in dev builds, and in web screenshot builds through `EXPO_PUBLIC_DEV_KIT=1`.
+- Icons, splash and notification icon are generated from `assets/ftc-mark-white.svg` and `assets/ftc-logo-white.svg` by `node scripts/generate-icons.mjs`. Don't edit the PNGs by hand.
 - Use mocks until the API is live. Switching to the real API should only mean changing `API_BASE_URL`.
 - Don't invent features or copy that aren't in the designs. Ask instead.
