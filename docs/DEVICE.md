@@ -10,7 +10,7 @@ One-time setup:
 1. `npm install -g eas-cli`
 2. `eas login` (create a free Expo account if you don't have one).
 3. `eas init` in the repo. It creates the EAS project and writes `extra.eas.projectId` into `app.json`. Commit that change.
-4. Choose the Android package name (for example `com.ftcksu.app`). The first build asks for it and saves it to `app.json` as `android.package`. **It can't be changed after the app is published**, so confirm it with the club first.
+4. The Android package name is `com.ftcksu.app` (`android.package` in `app.json`). **⚠️ Confirm it with the club before the first store release.** It can't be changed once the app is published on Google Play.
 
 Each time native code changes:
 5. `eas build --profile development --platform android`. It takes about 10–20 minutes, then prints a QR code and a link to an `.apk`.

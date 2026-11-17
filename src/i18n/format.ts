@@ -11,5 +11,5 @@ function plural(n: number, one: string, two: string, few: string, many: string):
 /** 1 ساعة · 2 ساعتين · 3–10 ساعات · 11+ ساعة */
 export const hoursLabel = (n: number) => plural(n, 'ساعة', 'ساعتين', 'ساعات', 'ساعة');
 
-/** باقي يوم · باقي يومين · باقي 3 أيام · باقي 11 يوم */
-export const daysLeftLabel = (n: number) => `باقي ${plural(n, 'يوم', 'يومين', 'أيام', 'يوم')}`;
+/** باقي يوم · باقي يومين · باقي 3 أيام · باقي 11 يوماً */
+export const daysLeftLabel = (n: number) => `باقي ${plural(n, 'يوم', 'يومين', 'أيام', 'يوماً')}`;

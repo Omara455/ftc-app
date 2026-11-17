@@ -12,6 +12,7 @@
       "supportsTablet": false
     },
     "android": {
+      "package": "com.ftcksu.app",
       "adaptiveIcon": {
         "backgroundColor": "#0C0A18",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
