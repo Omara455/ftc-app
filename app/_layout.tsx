@@ -7,7 +7,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/cairo';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -17,6 +17,8 @@ import { I18nManager, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { queryClient } from '@/api/queryClient';
+import { AuthProvider, useAuth } from '@/auth/AuthProvider';
 import { color } from '@/theme/tokens';
 
 // RTL everywhere. Native builds are also forced RTL by the expo-localization
@@ -33,8 +35,6 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 SplashScreen.preventAutoHideAsync();
 SystemUI.setBackgroundColorAsync(color.bg);
 
-const queryClient = new QueryClient();
-
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Cairo_400Regular,
@@ -43,13 +43,7 @@ export default function RootLayout() {
     Cairo_700Bold,
     Cairo_800ExtraBold,
   });
-  const ready = fontsLoaded || fontError != null;
-
-  useEffect(() => {
-    if (ready) SplashScreen.hideAsync();
-  }, [ready]);
-
-  if (!ready) return null;
+  if (!fontsLoaded && fontError == null) return null;
 
   return (
     // `dir` is a react-native-web prop: it makes start/end resolve right-to-left on web.
@@ -57,18 +51,49 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root} {...({ dir: 'rtl' } as object)}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <BottomSheetModalProvider>
-            <StatusBar style="light" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: color.bg },
-              }}
-            />
-          </BottomSheetModalProvider>
+          <AuthProvider>
+            <BottomSheetModalProvider>
+              <StatusBar style="light" />
+              <RootStack />
+            </BottomSheetModalProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+/** Auth gate: signed-out members only reach (auth); signed-in members only reach the app. */
+function RootStack() {
+  const { status, needsNotificationPrompt } = useAuth();
+
+  // Keep the splash up until we know which side of the gate to show.
+  useEffect(() => {
+    if (status !== 'booting') SplashScreen.hideAsync();
+  }, [status]);
+  if (status === 'booting') return null;
+
+  const signedIn = status === 'signedIn';
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: color.bg },
+      }}
+    >
+      {/* index only redirects; it's the anchor protected routes fall back to */}
+      <Stack.Screen name="index" />
+      <Stack.Protected guard={!signedIn}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn}>
+        <Stack.Protected guard={needsNotificationPrompt}>
+          <Stack.Screen name="notifications-permission" options={{ gestureEnabled: false }} />
+        </Stack.Protected>
+        <Stack.Screen name="(tabs)" />
+      </Stack.Protected>
+      <Stack.Screen name="dev/kit" />
+    </Stack>
   );
 }
 

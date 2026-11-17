@@ -40,14 +40,16 @@ Read these before writing code:
 ```
 app/
   _layout.tsx                 fonts, RTL, QueryClient, auth gate
-  (auth)/login.tsx  forgot.tsx  forgot-sent.tsx  notifications-permission.tsx
+  (auth)/login.tsx  forgot.tsx  forgot-sent.tsx
+  notifications-permission.tsx   screen 05: signed-in side of the auth gate, so it lives outside (auth)
   (tabs)/_layout.tsx          4 tabs, floating nav bar (see screens)
   (tabs)/tasks/index.tsx  [id].tsx  history.tsx
   (tabs)/community/index.tsx  search.tsx  committee/[id].tsx  member/[id].tsx
   (tabs)/leaderboard.tsx
   (tabs)/account/index.tsx  achievements.tsx  settings.tsx  edit-profile.tsx
   notifications.tsx
-  (sheets)/join/[id].tsx  leave/[id].tsx  submit/[id].tsx  change-password.tsx  logout.tsx
+  (sheets)/join/[id].tsx  leave/[id].tsx  submit/[id].tsx  change-password.tsx
+  (logout is a component sheet, src/features/auth/LogoutSheet.tsx, opened from Settings)
 src/
   api/        client.ts (fetch + token + 401 handling), endpoints, types.ts
   components/ Card, Chip, StateChip, Avatar, LeagueBadge, TaskCard, Stepper, Sheet, Button, ListRow, Skeleton, OfflineBanner, TabBar
@@ -62,7 +64,8 @@ Tab order in RTL from the right: **المهام · المجتمع · الصدا�
 - Build in the order of `docs/PLAN.md`. Finish one milestone, run it, compare it side by side with the design artboards, then move on.
 - Git: one branch per milestone (`m1-design-system`, `m2-auth-shell`, …) and a PR into `main` so CI runs before it's merged.
 - **Design checks happen in two loops.** Spacing, colour, copy and icons have to match the artboards.
-  1. **Fast loop (every screen, before you call it done): Expo web at 390×844, RTL.** Run `npm run shot -- compare <route> <Artboard>`, for example `npm run shot -- compare tasks Tasks`. It exports the web build, screenshots the route, renders the artboard from `design/artboards/` and saves both side by side in `.screenshots/`. Open the image and fix any difference. Other modes: `app <route…>`, `design <Artboard…>`, and the flags `--height=N` (tall capture, sliced into 844-pt pages), `--click="نص"` (tap by text first, e.g. to open a sheet), `--no-build` and `--debug`. Write routes without the leading slash, because Git Bash rewrites `/dev/kit`. `design/artboards/` is a local, git-ignored copy of the canvas `project/*.dc.html` files. If it's missing or the design changed, read them again from the design artifact.
+  1. **Fast loop (every screen, before you call it done): Expo web at 390×844, RTL.** Run `npm run shot -- compare <route> <Artboard>`, for example `npm run shot -- compare tasks Tasks`. It exports the web build, screenshots the route, renders the artboard from `design/artboards/` and saves both side by side in `.screenshots/`. Open the image and fix any difference. Other modes: `app <route…>`, `design <Artboard…>`, and the flags `--height=N` (tall capture, sliced into 844-pt pages), `--fill="label=value"` (type into a field), `--click="نص"` (tap by text, e.g. to open a sheet or submit), `--signed-in` (start with the mock token), `--no-build` and `--debug`. Write routes without the leading slash, because Git Bash rewrites `/dev/kit`. `design/artboards/` is a local, git-ignored copy of the canvas `project/*.dc.html` files. If it's missing or the design changed, read them again from the design artifact.
+  - `npm run smoke` runs the auth flow end to end against the mock API (also in CI). Extend it when a milestone adds flows.
   2. **Device check (end of every milestone): an Android development build** (EAS `development` profile or the Android Studio emulator), to test native RTL, fonts, SVGs, sheets and gestures, which web can't prove. The steps are in `docs/DEVICE.md`.
 - `/dev/kit` renders every component. It's available in dev builds, and in web screenshot builds through `EXPO_PUBLIC_DEV_KIT=1`.
 - Icons, splash and notification icon are generated from `assets/ftc-mark-white.svg` and `assets/ftc-logo-white.svg` by `node scripts/generate-icons.mjs`. Don't edit the PNGs by hand.

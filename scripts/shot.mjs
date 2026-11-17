@@ -3,6 +3,8 @@
 //
 //   node scripts/shot.mjs app /dev/kit [/tasks …] [--full] [--no-build]
 //       Exports the web build, serves it, and screenshots each route at 390×844 (RTL).
+//       --signed-in starts with the mock session token (to reach screens behind the auth gate).
+//       --fill="label=value" types into a field first (repeatable).
 //       --click="نص" taps an element by its text before the shot (open a sheet, a tab…).
 //       --height=6000 for a tall capture of a long scroll view, --debug to log page errors.
 //   node scripts/shot.mjs design Tasks [Foundations …]
@@ -113,14 +115,21 @@ function serve() {
 }
 
 async function shoot(page, url, file) {
+  const isDesign = url.includes('/__design/');
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(400); // let entry animations settle
   // --click="label" taps an element by its visible text first (e.g. to open a sheet).
+  // --fill="البريد الإلكتروني=a@b.c" types into the field with that label (repeatable).
+  // Fills and clicks drive the app only; artboards are static references.
+  for (const fill of isDesign ? [] : process.argv.filter((a) => a.startsWith('--fill='))) {
+    const [label, ...value] = fill.slice('--fill='.length).split('=');
+    await page.getByLabel(label, { exact: true }).first().fill(value.join('='));
+  }
   const click = process.argv.find((a) => a.startsWith('--click='));
-  if (click) {
+  if (click && !isDesign) {
     await page.getByText(click.slice('--click='.length), { exact: true }).first().click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(1200); // covers the mock API delay
   }
   if (flags.has('--debug')) {
     const text = await page.evaluate(() => document.body.innerText);
@@ -147,6 +156,10 @@ const server = await serve();
 const base = `http://localhost:${server.address().port}`;
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: 2 });
+// --signed-in: start with the mock session token (mock mode), so app routes past the auth gate render.
+if (flags.has('--signed-in')) {
+  await page.addInitScript(() => localStorage.setItem('ftc.token', 'mock-token'));
+}
 page.on('pageerror', (e) => console.error(`✗ page error: ${e.message}`));
 page.on('console', (m) => m.type() === 'error' && console.error(`✗ console: ${m.text()}`));
 if (flags.has('--debug')) {

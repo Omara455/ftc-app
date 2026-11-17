@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenInsets } from '@/lib/insets';
 
 import { IconButton } from '@/components/Button';
 import { Txt } from '@/components/Txt';
@@ -18,7 +18,7 @@ type Props = {
 
 /** Stack header: back (→) at the start, centred 16/700 title, optional action at the end. */
 export function Header({ title, onBack, end, safeTop = true }: Props) {
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   return (
     <View style={[styles.header, safeTop && { marginTop: insets.top + 7 }]}>
       <View style={styles.side}>
