@@ -79,7 +79,15 @@ export function tint(hex: string, alpha = 0.14): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
-export const radius = { sm: 10, md: 14, lg: 20, card: 18, sheet: 28, pill: 999, device: 44 } as const;
+export const radius = {
+  sm: 10,
+  md: 14,
+  lg: 20,
+  card: 18,
+  sheet: 28,
+  pill: 999,
+  device: 44,
+} as const;
 export const space = { gutter: 20, xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
 export const touch = { min: 44 } as const;
 
@@ -106,5 +114,11 @@ export const font = {
 } as const;
 
 export const shadow = {
-  nav: { shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 16, shadowOffset: { width: 0, height: 12 }, elevation: 12 },
+  nav: {
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 12,
+  },
 } as const;
