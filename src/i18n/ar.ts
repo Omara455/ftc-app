@@ -16,9 +16,8 @@ export const ar = {
     noAccount: 'ما عندك حساب؟ التسجيل في النادي يفتح من',
     applyLink: 'ftcksu.com/apply',
     wrongCredentials: 'البريد أو كلمة المرور غير صحيحة. جرّب مرة ثانية أو استرجع كلمة المرور.',
-    // ⚠️ Not in the design (SCREENS.md asks for a "try again in a minute" message on 429).
-    // Proposed wording, needs sign-off.
-    throttled: 'حاولت كثير. جرّب مرة ثانية بعد دقيقة.',
+    // Not in the design (429 on login/forgot). Wording approved in review of PR #2.
+    throttled: 'محاولات كثيرة. جرّب مرة ثانية بعد دقيقة.',
     // 03 Forgot password
     forgotTitle: 'نسيت كلمة المرور؟',
     forgotBody: 'اكتب بريدك المسجّل في البوابة، ونرسل لك رابط تعيين كلمة مرور جديدة.',
@@ -79,8 +78,8 @@ export const ar = {
     back: 'رجوع',
     cancel: 'إلغاء',
     unread: 'غير مقروء',
-    // ⚠️ Not in the design: generic error for 5xx / unexpected responses. Proposed wording,
-    // needs sign-off (there is no error-state artboard yet).
+    // Not in the design: generic error for 5xx / unexpected responses. Approved in review
+    // of PR #2 (there is no error-state artboard yet).
     serverError: 'صار خلل عندنا. جرّب مرة ثانية بعد شوي.',
     /** "2 من 4 منضمين" */
     joinedOf: (joined: number, capacity: number) => `${joined} من ${capacity} منضمين`,

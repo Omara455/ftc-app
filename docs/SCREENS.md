@@ -19,7 +19,7 @@ The links between `.dc.html` files are the navigation map. If an `<a href>` in a
 | 01 | Login | `/login` | Logo, «أهلاً فيك», email and password fields (eye toggle). «نسيت كلمة المرور؟» goes to 03. «تسجيل الدخول» calls `POST /auth/login`, then 05 on first login, otherwise Tasks. The footer links to `ftcksu.com/apply`. **P1** |
 | 02 | Login error | same route, error state | A red banner above the fields; the password field gets a `danger` border. Show it on a 422 or 401 response. Throttling (429) uses the same banner with a "try again in a minute" message. **P1** |
 | 03 | Forgot password | `/forgot` | Email field, «أرسل الرابط». Calls the portal's existing reset (`POST /auth/forgot`, which sends the Laravel reset email). **P1** |
-| 04 | Link sent | `/forgot-sent` | Shows the masked email and the 60-minute expiry. «رجوع لتسجيل الدخول». «إعادة الإرسال» has a 0:45 cooldown timer. |
+| 04 | Link sent | `/forgot-sent` | Shows the **full** email the member typed (as in the artboard), so they can spot a typo, plus the 60-minute expiry. «رجوع لتسجيل الدخول». «إعادة الإرسال» has a 0:45 cooldown timer. |
 | 05 | Notification permission | `/notifications-permission` | Explains the value with sample notifications. «فعّل الإشعارات» asks for OS permission, then `POST /devices` (P2). «لاحقاً» skips. Show it only once. |
 
 ## 2. Task lifecycle: `(tabs)/tasks`
