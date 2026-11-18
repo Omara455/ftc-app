@@ -160,7 +160,68 @@ await step('offline: banner + cached tasks, back online: banner goes', async () 
   await page.getByText('ما فيه اتصال بالإنترنت').waitFor({ state: 'detached', timeout: 5000 });
 });
 
+// ── M4: community, leaderboard, account ──────────────────────────────────────
+const bodyText = () => page.evaluate(() => document.body.innerText);
+/** A number of hours («14 ساعة», «+3»): must never appear outside the leaderboard. */
+const HOURS = /\d+\s*ساع|\+\d/;
+
+await step('Community: counts, leadership, my committee, teams expand', async () => {
+  await page.goto(base + '/community');
+  await see('290 عضواً · 8 لجان · 6 فرق');
+  await see('لمى العتيبي');
+  await see('لجنتك');
+  await page.getByLabel('عرض الفرق، 4 فرق', { exact: true }).click();
+  await see('كتابة المحتوى · 27');
+});
+
+await step('committee page keeps the tab bar and never shows hours', async () => {
+  await tap('لجنة الفعاليات');
+  await expectUrl('/community/committee/3');
+  await see('القيادة');
+  if (!(await tabBarVisible())) throw new Error('tab bar hidden on committee page');
+  await page.goto(base + '/community/committee/1');
+  await see('أنت');
+  if (HOURS.test(await bodyText())) throw new Error('hours shown on a committee page');
+});
+
+await step('search highlights matches and opens a member without hours', async () => {
+  await page.goto(base + '/community/search');
+  await fill('ابحث عن عضو', 'سا');
+  await see('5 أعضاء');
+  await tap('التقنية · نائبة القائد');
+  await expectUrl('/community/member/102');
+  await see('آخر إنجازاتها');
+  await see('بيانات التواصل والساعات تظهر لصاحبها وقادته فقط.');
+  if (await tabBarVisible()) throw new Error('tab bar visible on member profile');
+  // A count of hours («14 ساعة», «+3») would be a privacy leak; achievement names like
+  // «خمسون ساعة» are fine.
+  if (HOURS.test(await bodyText())) throw new Error('hours shown on a member profile');
+});
+
+await step('Leaderboard: league progress, podium, pinned rank', async () => {
+  await page.goto(base + '/leaderboard');
+  await see('المستوى الفضي');
+  await see('باقي لك 16 ساعة للذهبي');
+  await see('العضو المتميز');
+  await see('ترتيبك هالشهر');
+  await see('5 ساعات وتدخل العشرة');
+});
+
+await step('Account → achievements; settings change-password sheet', async () => {
+  await page.goto(base + '/account');
+  await see('آخر النشاطات');
+  await tap('عرض الكل');
+  await expectUrl('/account/achievements');
+  await see('حصلت على 4 من 9');
+  await page.goto(base + '/account/settings');
+  await tap('تغيير كلمة المرور');
+  await see('أرسل الرابط');
+  await tap('أرسل الرابط');
+  await page.getByText('أرسل الرابط').waitFor({ state: 'hidden', timeout: 5000 });
+});
+
 await step('tab bar switches tabs', async () => {
+  await page.goto(base + '/tasks');
   await tap('الصدارة');
   await expectUrl('/leaderboard');
   await see('لوحة الصدارة');

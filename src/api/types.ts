@@ -42,7 +42,8 @@ export interface Me {
   pendingHours: number;
   tasksDone: number;
   achievements: Achievement[];
-  recentActivity: { type: string; text: string; at: string }[];
+  /** M4 proposal: typed entries (see `Activity`). */
+  recentActivity: Activity[];
 }
 
 export interface LoginResponse {
@@ -135,3 +136,89 @@ export interface TaskHistoryResponse {
     hours: number;
   }[];
 }
+
+// ── Community, members, leaderboard, achievements (M4) ───────────────────────
+// "M4 proposal" fields aren't in the original contract; the designs need them.
+
+/** M4 proposal: tells the app how to colour a role (amber leads, blue deputies). */
+export type RoleKind = 'president' | 'vice' | 'leader' | 'deputy' | 'member';
+
+export interface MemberCard {
+  id: number;
+  name: string;
+  gender: Gender;
+  committee: CommitteeRef;
+  role: string;
+  league: League;
+  photoUrl: string | null;
+  /** M4 proposal */
+  roleKind: RoleKind;
+}
+
+export interface Committee extends CommitteeRef {
+  /** M4 proposal: display name («اللجنة التقنية», «لجنة الفعاليات»); `name` stays short («التقنية»). */
+  title: string;
+  membersCount: number;
+  leader: MemberCard | null;
+  deputy: MemberCard | null;
+  teams: { id: number; name: string; membersCount: number }[];
+  isMine: boolean;
+  /** M4 proposal: «طالبات وطلاب» badge on mixed committees. */
+  mixed: boolean;
+}
+
+export interface CommunityResponse {
+  counts: { members: number; committees: number; teams: number };
+  leadership: MemberCard[];
+  committees: Committee[];
+}
+
+export interface CommitteeDetail extends Committee {
+  description: string;
+  leaders: MemberCard[];
+  /** Sorted by league (highest first). Never hours (privacy rule 6). */
+  members: MemberCard[];
+}
+
+export interface MemberDetail extends MemberCard {
+  bio: string | null;
+  /** Latest 3. */
+  achievements: Achievement[];
+  /** M4 proposal: «7 من 9» next to «آخر إنجازاتها». */
+  achievementsUnlocked: number;
+  achievementsTotal: number;
+}
+
+export interface RankRow {
+  position: number;
+  id: number;
+  name: string;
+  gender: Gender;
+  committee: CommitteeRef;
+  hours: number;
+}
+
+export interface LeaderboardResponse {
+  semester: string;
+  myHours: number;
+  myLeague: League;
+  nextLeague: League | null;
+  hoursToNext: number | null;
+  monthlyTop: RankRow[];
+  myPosition: number | null;
+  myMonthHours: number;
+  inRanking: boolean;
+}
+
+export interface AchievementsResponse {
+  unlocked: number;
+  total: number;
+  nearest: { id: Achievement['id']; progress: number; target: number } | null;
+  items: Achievement[];
+}
+
+/** M4 proposal: typed activity entries for «آخر النشاطات» (icon + «+3 ساعات»). */
+export type Activity =
+  | { type: 'task_approved'; text: string; at: string; hours: number }
+  | { type: 'task_joined'; text: string; at: string }
+  | { type: 'league_up'; text: string; at: string; league: League };

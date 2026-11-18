@@ -107,7 +107,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    minHeight: 52,
+    // The artboard rows are min-height 52 + 6/6 padding outside box-sizing → 64 rendered.
+    minHeight: 64,
     paddingVertical: 6,
     paddingHorizontal: 14,
   },

@@ -24,6 +24,15 @@ export const daysLeftLabel = (n: number) => `باقي ${plural(n, 'يوم', 'ي�
 export const seatsLeftLabel = (n: number) =>
   `باقي ${plural(n, 'مقعد', 'مقعدين', 'مقاعد', 'مقعداً')}`;
 
+/** عضو · عضوان · 3 أعضاء · 11 عضواً */
+export const membersLabel = (n: number) => plural(n, 'عضو', 'عضوان', 'أعضاء', 'عضواً');
+
+/** لجنة · لجنتان · 8 لجان · 11 لجنة */
+export const committeesLabel = (n: number) => plural(n, 'لجنة', 'لجنتان', 'لجان', 'لجنة');
+
+/** فريق · فريقان · 4 فرق · 11 فريقاً */
+export const teamsLabel = (n: number) => plural(n, 'فريق', 'فريقان', 'فرق', 'فريقاً');
+
 /** «1.2 م.ب», «340 ك.ب» */
 export function fileSize(bytes: number): string {
   if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1).replace(/\.0$/, '')} م.ب`;

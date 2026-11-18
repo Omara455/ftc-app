@@ -12,6 +12,15 @@
 //   EXPO_PUBLIC_MOCK_DELAY=ms     → response delay (default 450)
 import { onlineManager } from '@tanstack/react-query';
 
+import { matchIndex } from '@/lib/arabic';
+import {
+  achievementsFixture,
+  allMembers,
+  committeeFixture,
+  communityFixture,
+  leaderboardFixture,
+  memberFixture,
+} from '@/mocks/community';
 import { meFixture, MOCK_PASSWORD } from '@/mocks/me';
 import { emptyTasksFixture, historyFixture, taskFixture, tasksFixture } from '@/mocks/tasks';
 
@@ -111,6 +120,23 @@ export async function mockFetch(
       return ok(withDeadlines(tasksFixture()));
     case 'GET /tasks/history':
       return ok(historyFixture(params.get('scope') === 'all' ? 'all' : 'term'));
+    case 'GET /community':
+      return ok(communityFixture());
+    case 'GET /members': {
+      const q = params.get('q') ?? '';
+      return ok(q.trim() ? allMembers.filter((m) => matchIndex(m.name, q) >= 0) : []);
+    }
+    case 'GET /leaderboard':
+      return ok(leaderboardFixture());
+    case 'GET /achievements':
+      return ok(achievementsFixture());
+  }
+
+  const byId = /^GET \/(committees|members)\/(\d+)$/.exec(route);
+  if (byId) {
+    const id = Number(byId[2]);
+    const found = byId[1] === 'committees' ? committeeFixture(id) : memberFixture(id);
+    return found ? ok(found) : { status: 404, json: { message: 'Not found.' } };
   }
 
   const taskMatch = /^GET \/tasks\/(\d+)$/.exec(route);

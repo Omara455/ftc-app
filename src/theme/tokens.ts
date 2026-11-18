@@ -23,6 +23,7 @@ export const color = {
   navGlass: 'rgba(26,22,48,0.96)',
   barGlass: 'rgba(12,10,24,0.96)', // sticky CTA bar at the bottom of detail screens
   warnSurface: '#2A2140', // offline banner
+  pinnedSurface: '#211A42', // pinned «ترتيبك هالشهر» row on the leaderboard
   line: '#2B2550',
   lineStrong: '#3A335C',
   scrim: 'rgba(6,4,14,0.74)', // behind bottom sheets

@@ -57,6 +57,8 @@ export function Avatar({ gender, size = 36, photoUrl, ring = 'gender', hero, sta
         borderRadius: (size + 3) / 2,
         borderWidth: 1.5,
         borderColor: ringColor,
+        // outside the circle without taking layout space, like the design's box-shadow
+        margin: -1.5,
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -75,6 +77,7 @@ const styles = StyleSheet.create({
   },
   halo: {
     padding: 6,
+    margin: -6, // the halo doesn't take layout space (box-shadow in the design)
     backgroundColor: tint(color.brand, 0.16),
     shadowColor: color.brand,
     shadowOpacity: 0.35,

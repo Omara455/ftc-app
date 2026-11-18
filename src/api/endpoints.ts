@@ -4,7 +4,13 @@ import { Platform } from 'react-native';
 
 import { api } from './client';
 import type {
+  AchievementsResponse,
+  CommitteeDetail,
+  CommunityResponse,
   HistoryScope,
+  LeaderboardResponse,
+  MemberCard,
+  MemberDetail,
   LoginResponse,
   Me,
   Task,
@@ -35,4 +41,20 @@ export const tasksApi = {
   list: () => api.get<TasksResponse>('/tasks'),
   get: (id: number) => api.get<Task>(`/tasks/${id}`),
   history: (scope: HistoryScope) => api.get<TaskHistoryResponse>(`/tasks/history?scope=${scope}`),
+};
+
+export const communityApi = {
+  get: () => api.get<CommunityResponse>('/community'),
+  committee: (id: number) => api.get<CommitteeDetail>(`/committees/${id}`),
+  member: (id: number) => api.get<MemberDetail>(`/members/${id}`),
+  search: (q: string, signal?: AbortSignal) =>
+    api.get<MemberCard[]>(`/members?q=${encodeURIComponent(q)}`, { signal }),
+};
+
+export const leaderboardApi = {
+  get: () => api.get<LeaderboardResponse>('/leaderboard'),
+};
+
+export const achievementsApi = {
+  get: () => api.get<AchievementsResponse>('/achievements'),
 };

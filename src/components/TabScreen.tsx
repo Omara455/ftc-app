@@ -21,6 +21,8 @@ export function TabScreen({
   refreshing,
   onRefresh,
   mark,
+  extraBottom = 0,
+  headerSpacing = 18,
 }: {
   header: React.ReactNode;
   banner?: React.ReactNode;
@@ -30,6 +32,10 @@ export function TabScreen({
   onRefresh?: () => void;
   /** FTC mark watermark (Tasks tab). */
   mark?: boolean;
+  /** Extra bottom space for content pinned above the tab bar (leaderboard rank). */
+  extraBottom?: number;
+  /** Space under the header; the artboards use 18 (Tasks), 9 (Community), 13 (Leaderboard). */
+  headerSpacing?: number;
 }) {
   const insets = useScreenInsets();
   return (
@@ -51,7 +57,7 @@ export function TabScreen({
           styles.content,
           {
             paddingTop: insets.top + (banner ? 7 : 13),
-            paddingBottom: TAB_BAR_SPACE + insets.bottom,
+            paddingBottom: TAB_BAR_SPACE + insets.bottom + extraBottom,
             gap,
           },
         ]}
@@ -61,7 +67,7 @@ export function TabScreen({
             {banner}
           </View>
         ) : null}
-        <View style={styles.header}>{header}</View>
+        <View style={{ marginBottom: headerSpacing - gap }}>{header}</View>
         {children}
       </ScrollView>
     </View>
@@ -72,5 +78,4 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.gutter },
   banner: {},
-  header: { marginBottom: 4 }, // header → content: 60 → 136 in the design
 });

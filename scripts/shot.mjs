@@ -131,6 +131,9 @@ async function shoot(page, url, file) {
     const [label, ...value] = fill.slice('--fill='.length).split('=');
     await page.getByLabel(label, { exact: true }).first().fill(value.join('='));
   }
+  if (!isDesign && process.argv.some((x) => x.startsWith('--fill='))) {
+    await page.waitForTimeout(1200); // debounce + mock API before the shot
+  }
   const click = process.argv.find((a) => a.startsWith('--click='));
   if (click && !isDesign) {
     await page.getByText(click.slice('--click='.length), { exact: true }).first().click();
