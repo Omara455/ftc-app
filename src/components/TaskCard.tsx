@@ -11,7 +11,7 @@ import { color, hue, radius, tint, type TaskState } from '@/theme/tokens';
 // ── «مهامي» card ───────────────────────────────────────────────────────────────
 
 type MyTaskFooter =
-  | { kind: 'deadline'; label: string } // «باقي 3 أيام» in amber
+  | { kind: 'deadline'; label: string; overdue?: boolean } // «باقي 3 أيام» amber · «متأخرة» red
   | { kind: 'note'; text: string } // leader's return note, e.g. «فيصل: أضف لقطات…»
   | { kind: 'meta'; text: string }; // «سلّمتها قبل ساعتين»
 
@@ -47,8 +47,16 @@ export function MyTaskCard({ title, state, hours, footer, compact, onPress }: My
         <Txt variant="cardTitle">{title}</Txt>
         {compact ? null : footer?.kind === 'deadline' ? (
           <View style={styles.inlineRow}>
-            <Clock size={14} color={hue.amber.base} strokeWidth={2} />
-            <Txt size={12.5} weight="semibold" color={hue.amber.base}>
+            <Clock
+              size={14}
+              color={footer.overdue ? color.danger : hue.amber.base}
+              strokeWidth={2}
+            />
+            <Txt
+              size={12.5}
+              weight="semibold"
+              color={footer.overdue ? color.danger : hue.amber.base}
+            >
               {footer.label}
             </Txt>
           </View>

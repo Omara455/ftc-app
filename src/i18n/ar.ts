@@ -121,6 +121,8 @@ export const ar = {
     shared: 'مشتركة',
     yourCommittee: 'لجنتك',
     path: 'مسار المهمة',
+    dueToday: 'آخر يوم',
+    overdue: 'متأخرة',
     // 07 / 10 / 12 / 13 Task detail
     title: 'تفاصيل المهمة',
     /** «أنشأها فيصل» / «أنشأتها هيفاء» */

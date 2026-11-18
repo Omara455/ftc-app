@@ -8,6 +8,7 @@
 //   device offline (NetInfo)      → every request fails with a network error
 //   EXPO_PUBLIC_MOCK_SCENARIO=empty → no tasks at all (screen 15)
 //   EXPO_PUBLIC_MOCK_SCENARIO=error → GET /tasks* answers 500 (error state)
+//   EXPO_PUBLIC_MOCK_SCENARIO=deadlines → task 101 due today, task 102 overdue
 //   EXPO_PUBLIC_MOCK_DELAY=ms     → response delay (default 450)
 import { onlineManager } from '@tanstack/react-query';
 
@@ -32,6 +33,25 @@ const notFound = (route: string): MockResponse => ({
   status: 404,
   json: { message: `Mock has no route for ${route}` },
 });
+
+// «آخر يوم» / «متأخرة» scenario: shift two deadlines without touching the fixtures.
+function shiftedDeadline(id: number): string | null {
+  if (SCENARIO !== 'deadlines') return null;
+  const d = new Date();
+  if (id === 101)
+    d.setHours(23, 59, 0, 0); // due later today
+  else if (id === 102)
+    d.setDate(d.getDate() - 1); // yesterday
+  else return null;
+  return d.toISOString();
+}
+function withDeadline<T extends { id: number; deadline: string }>(t: T): T {
+  const deadline = shiftedDeadline(t.id);
+  return deadline ? { ...t, deadline } : t;
+}
+function withDeadlines<T extends { mine: { id: number; deadline: string }[] }>(r: T): T {
+  return { ...r, mine: r.mine.map(withDeadline) };
+}
 
 export async function mockFetch(
   method: string,
@@ -87,14 +107,16 @@ export async function mockFetch(
           : meFixture,
       );
     case 'GET /tasks':
-      return ok(SCENARIO === 'empty' ? emptyTasksFixture() : tasksFixture());
+      if (SCENARIO === 'empty') return ok(emptyTasksFixture());
+      return ok(withDeadlines(tasksFixture()));
     case 'GET /tasks/history':
       return ok(historyFixture(params.get('scope') === 'all' ? 'all' : 'term'));
   }
 
   const taskMatch = /^GET \/tasks\/(\d+)$/.exec(route);
   if (taskMatch) {
-    const task = taskFixture(Number(taskMatch[1]));
+    const found = taskFixture(Number(taskMatch[1]));
+    const task = found ? withDeadline(found) : null;
     return task ? ok(task) : { status: 404, json: { message: 'Not found.' } };
   }
 

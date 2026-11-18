@@ -13,12 +13,13 @@ import { TabScreen } from '@/components/TabScreen';
 import { AvailableTaskCard, MyTaskCard } from '@/components/TaskCard';
 import { Txt } from '@/components/Txt';
 import { flags } from '@/config/flags';
+import { deadlineInfo } from '@/features/tasks/deadline';
 import { EmptyTasks } from '@/features/tasks/EmptyTasks';
 import { StatsCard } from '@/features/tasks/StatsCard';
 import { SubtitleSkeleton, TasksSkeleton } from '@/features/tasks/TasksSkeleton';
 import { ar } from '@/i18n/ar';
-import { ago, daysUntil, timeRange, weekdayDayMonth } from '@/i18n/dates';
-import { daysLeftLabel, firstName, hoursLabel } from '@/i18n/format';
+import { ago, timeRange, weekdayDayMonth } from '@/i18n/dates';
+import { firstName, hoursLabel } from '@/i18n/format';
 import { useIsOffline } from '@/lib/network';
 import { color } from '@/theme/tokens';
 
@@ -170,8 +171,8 @@ function myFooter(t: TaskSummary) {
         ? { kind: 'meta' as const, text: ar.tasks.submittedAgo(ago(t.submittedAt)) }
         : undefined;
     case 'working': {
-      const days = daysUntil(t.deadline);
-      return days >= 1 ? { kind: 'deadline' as const, label: daysLeftLabel(days) } : undefined;
+      const d = deadlineInfo(t.deadline, t.myState);
+      return d ? { kind: 'deadline' as const, ...d } : undefined;
     }
     default:
       return undefined;
