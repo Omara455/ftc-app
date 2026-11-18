@@ -6,6 +6,7 @@ import { setToken, setUnauthorizedHandler } from '@/api/client';
 import { authApi } from '@/api/endpoints';
 import { persister, queryClient, queryKeys } from '@/api/queryClient';
 import { flags } from '@/config/flags';
+import { authenticate, biometricAvailable, biometricEnabled } from '@/lib/biometric';
 import { keys, storage } from '@/lib/storage';
 
 type Status = 'booting' | 'signedOut' | 'signedIn';
@@ -46,12 +47,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setPrompted(wasPrompted === '1');
       if (token) {
         setToken(token);
+        // «الدخول بالبصمة»: confirm it's the owner before opening a saved session.
+        // Failure or cancel → drop the session and fall back to the password login.
+        if ((await biometricEnabled()) && (await biometricAvailable())) {
+          if (!(await authenticate())) {
+            try {
+              await authApi.logout();
+            } catch {
+              // offline: the token is still cleared locally
+            }
+            await clearLocal();
+            return;
+          }
+        }
         setStatus('signedIn');
       } else {
         setStatus('signedOut');
       }
     })().catch(() => setStatus('signedOut'));
-  }, []);
+  }, [clearLocal]);
 
   useEffect(() => {
     setUnauthorizedHandler(() => void clearLocal());

@@ -55,7 +55,7 @@ export function TabBar({ active, onPress, floating = true }: Props) {
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
       <BottomFade height={150} solidFrom={0.45} />
-      <View style={[styles.position, { bottom: Math.max(24, insets.bottom) }]}>{bar}</View>
+      <View style={[styles.position, { bottom: tabBarBottom(insets.bottom) }]}>{bar}</View>
     </View>
   );
 }
@@ -83,3 +83,10 @@ const styles = StyleSheet.create({
   },
   selected: { backgroundColor: color.brandTint },
 });
+
+/**
+ * Distance of the bar from the screen bottom. The artboards put it 24pt up on a phone
+ * with a 34pt home indicator, so the inset only pushes it further on devices with a
+ * taller system bar (Android 3-button navigation).
+ */
+export const tabBarBottom = (insetBottom: number) => Math.max(24, insetBottom - 10);

@@ -70,10 +70,13 @@ export const SharedChip = ({ label }: { label: string }) => (
   <Chip label={label} fg={hue.blue.s300} bg={tint(hue.blue.base, 0.14)} />
 );
 
-/** Deadline chip, e.g. «باقي 3 أيام». */
-export const DeadlineChip = ({ label }: { label: string }) => (
-  <Chip label={label} fg={hue.amber.base} bg={tint(hue.amber.base, 0.12)} />
-);
+/** Deadline chip: «باقي 3 أيام» / «آخر يوم» in amber, «متأخرة» in danger red. */
+export const DeadlineChip = ({ label, overdue }: { label: string; overdue?: boolean }) =>
+  overdue ? (
+    <Chip label={label} fg={color.danger} bg={tint(hue.red.base, 0.14)} bold />
+  ) : (
+    <Chip label={label} fg={hue.amber.base} bg={tint(hue.amber.base, 0.12)} />
+  );
 
 /** Role chip, e.g. «عضو». */
 export const RoleChip = ({ label }: { label: string }) => (

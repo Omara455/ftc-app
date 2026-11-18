@@ -10,10 +10,11 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { Skeleton } from '@/components/Skeleton';
 import type { Step } from '@/components/Stepper';
 import { Ltr, Txt } from '@/components/Txt';
+import { deadlineInfo } from '@/features/tasks/deadline';
 import { ar } from '@/i18n/ar';
 import { isolateLatin } from '@/i18n/bidi';
-import { ago, dayAgo, dayMonth, daysUntil } from '@/i18n/dates';
-import { daysLeftLabel, fileSize, firstName, hoursUnit, seatsLeftLabel } from '@/i18n/format';
+import { ago, dayAgo, dayMonth } from '@/i18n/dates';
+import { fileSize, firstName, hoursUnit, seatsLeftLabel } from '@/i18n/format';
 import { color, hue, radius, taskState, tint } from '@/theme/tokens';
 
 const t = ar.task;
@@ -21,8 +22,7 @@ const t = ar.task;
 // ── Chips · title · creator ─────────────────────────────────────────────────
 
 export function TaskHeading({ task, showCreator }: { task: Task; showCreator: boolean }) {
-  const days = daysUntil(task.deadline);
-  const showDeadline = (task.myState === 'working' || task.myState === 'returned') && days >= 1;
+  const deadline = deadlineInfo(task.deadline, task.myState);
   return (
     <View style={styles.heading}>
       <View style={styles.chips}>
@@ -31,7 +31,7 @@ export function TaskHeading({ task, showCreator }: { task: Task; showCreator: bo
           <CommitteeChip key={c.id} label={c.name} committeeKey={c.key} />
         ))}
         {task.myState ? <StateChip state={task.myState} /> : null}
-        {showDeadline ? <DeadlineChip label={daysLeftLabel(days)} /> : null}
+        {deadline ? <DeadlineChip label={deadline.label} overdue={deadline.overdue} /> : null}
       </View>
       <Txt size={23} leading={1.45} weight="extrabold" accessibilityRole="header">
         {task.title}

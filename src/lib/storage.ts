@@ -24,4 +24,6 @@ export const keys = {
   token: 'ftc.token',
   /** Set once screen 05 (notification permission) has been shown. */
   notificationsPrompted: 'ftc.notificationsPrompted',
+  /** «الدخول بالبصمة» toggle (screen 27). */
+  biometric: 'ftc.biometric',
 } as const;

@@ -57,7 +57,8 @@ interface Me {
   id: number; universityId: string; name: string; gender: Gender;
   email: string; committee: CommitteeRef; role: string; bio: string | null; photoUrl: string | null;
   league: League; termHours: number; pendingHours: number; tasksDone: number;
-  achievements: Achievement[]; recentActivity: { type: string; text: string; at: string }[];
+  achievements: Achievement[];
+  recentActivity: Activity[];        // M4 proposal: typed entries (was { type: string; text; at })
 }
 interface CommitteeRef { id: number; key: string; name: string }
 interface PersonRef { id: number; name: string; gender: Gender; role: string }
@@ -83,13 +84,22 @@ interface Task extends TaskSummary {
   canClaim: boolean; canLeave: boolean; canSubmit: boolean; canEditSubmission: boolean;
 }
 interface FileRef { name: string; size: number; url: string }
-interface MemberCard { id: number; name: string; gender: Gender; committee: CommitteeRef; role: string; league: League; photoUrl: string | null }
-interface Committee extends CommitteeRef { membersCount: number; leader: MemberCard | null; deputy: MemberCard | null; teams: { id: number; name: string; membersCount: number }[]; isMine: boolean }
+interface MemberCard { id: number; name: string; gender: Gender; committee: CommitteeRef; role: string; league: League; photoUrl: string | null;
+  roleKind: 'president'|'vice'|'leader'|'deputy'|'member' }   // M4 proposal: role colour + crown/star
+interface Committee extends CommitteeRef { membersCount: number; leader: MemberCard | null; deputy: MemberCard | null; teams: { id: number; name: string; membersCount: number }[]; isMine: boolean;
+  title: string;   // M4 proposal: «اللجنة التقنية» / «لجنة الفعاليات» (name stays «التقنية»)
+  mixed: boolean } // M4 proposal: «طالبات وطلاب» badge
+type Activity =    // M4 proposal
+  | { type: 'task_approved'; text: string; at: string; hours: number }
+  | { type: 'task_joined'; text: string; at: string }
+  | { type: 'league_up'; text: string; at: string; league: League };
 interface RankRow { position: number; id: number; name: string; gender: Gender; committee: CommitteeRef; hours: number }
 interface Achievement { id: 'journey-start'|'first-task'|'tasks-5'|'tasks-25'|'hours-10'|'hours-50'|'hours-100'|'week-top1'|'leadership'; name: string; description: string; unlockedAt: string | null; progress?: number; target?: number }
 interface Notification { id: number; type: 'task_returned'|'task_new'|'deadline'|'task_approved'|'achievement'|'league'; title: string; body: string; taskId?: number; readAt: string | null; createdAt: string }
 ```
 
 **Privacy:** `RankRow.hours` exists only on `/leaderboard`. `MemberCard` never includes hours.
+
+**M4 proposals:** `MemberCard.roleKind`, `Committee.title` and `.mixed`, typed `Me.recentActivity` (`Activity`), and on `GET /members/{id}` the counts `achievementsUnlocked` / `achievementsTotal` («7 من 9»). `GET /members?q=` is now used (server search with Arabic letter folding: أ/إ/آ→ا, ة→ه, ى→ي).
 
 **M3 proposals (need the portal team's OK):** the task screens show data the original contract didn't carry. `TaskSummary` gains `location`, `timeFrom`, `timeTo`, `creator` (with `gender`), `submittedAt` and `people` (id + gender only); `Task` gains `createdAt` and `myJoinedAt`. The app's mocks already return them.

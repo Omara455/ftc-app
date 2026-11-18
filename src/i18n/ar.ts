@@ -67,6 +67,87 @@ export const ar = {
     settings: 'الإعدادات',
     notifications: 'الإشعارات',
   },
+  community: {
+    // 20 Community
+    searchPlaceholder: 'ابحث باسم أي عضو…',
+    leadership: 'قيادة النادي',
+    committees: 'اللجان والفرق',
+    mixed: 'طالبات وطلاب',
+    // Not in the design: accessibility label of the teams toggle on committee rows.
+    showTeams: (teams: string) => `عرض الفرق، ${teams}`,
+    // 21 Search
+    searchLabel: 'ابحث عن عضو',
+    // ⚠️ Not in the design: search with no results. Proposed wording, needs sign-off.
+    noResults: 'ما لقينا أحد بهالاسم.',
+    // 22 Committee
+    committeeTitle: 'اللجنة',
+    yours: 'لجنتك',
+    leaders: 'القيادة',
+    /** «الأعضاء · 30» */
+    membersCount: (n: number) => `الأعضاء · ${n}`,
+    byLeague: 'مرتّبين بالمستوى',
+    // 23 Member
+    memberTitle: 'ملف العضو',
+    /** «آخر إنجازاتها» / «آخر إنجازاته» */
+    latestAchievements: (gender: 'male' | 'female') =>
+      gender === 'female' ? 'آخر إنجازاتها' : 'آخر إنجازاته',
+    privacyNote: 'بيانات التواصل والساعات تظهر لصاحبها وقادته فقط.',
+  },
+  leaderboard: {
+    // 24
+    yourLeague: 'مستواك هالترم',
+    /** «المستوى الفضي» */
+    leagueTitle: (label: string) => `المستوى ${label}`,
+    /** «باقي لك 16 ساعة للذهبي» — `hours` already agreed («16 ساعة») */
+    toNext: (hours: string, next: string) => `باقي لك ${hours} لل${next.replace(/^ال/, '')}`,
+    leagueLabel: 'مستواك',
+    /** «أفضل 10 لشهر نوفمبر» */
+    topTitle: (month: string) => `أفضل 10 لشهر ${month}`,
+    topLabel: 'أفضل 10 لهذا الشهر',
+    /** «العضو المتميز» / «العضوة المتميزة» */
+    topMember: (gender: 'male' | 'female') =>
+      gender === 'female' ? 'العضوة المتميزة' : 'العضو المتميز',
+    yourRank: 'ترتيبك هالشهر',
+    /** «5 ساعات وتدخل العشرة» */
+    toTopTen: (hours: string) => `${hours} وتدخل العشرة`,
+  },
+  account: {
+    // 25
+    tasksDone: 'مهام منجزة',
+    approvedHours: 'ساعة معتمدة',
+    pending: 'بانتظار الاعتماد',
+    achievements: 'الإنجازات',
+    /** «4 من 9» */
+    ofTotal: (a: number, b: number) => `${a} من ${b}`,
+    seeAll: 'عرض الكل',
+    activity: 'آخر النشاطات',
+    // 26
+    /** «حصلت على 4 من 9» */
+    gotOf: (a: number, b: number) => `حصلت على ${a} من ${b}`,
+    /** «الأقرب: خمسون ساعة» */
+    nearest: (name: string) => `الأقرب: ${name}`,
+  },
+  settings: {
+    // 27
+    account: 'الحساب',
+    editProfile: 'تعديل الملف',
+    changePassword: 'تغيير كلمة المرور',
+    changePasswordSub: 'نرسل لك رابط تأكيد على بريدك',
+    biometric: 'الدخول بالبصمة',
+    notifications: 'الإشعارات',
+    notifyNewTasks: 'مهام جديدة للجنتك',
+    notifyReview: 'اعتماد التسليم أو إرجاعه',
+    notifyDeadline: 'تذكير قبل موعد المهمة',
+    notifyLeague: 'تحديثات الصدارة والمستوى',
+    about: 'عن التطبيق',
+    openPortal: 'فتح البوابة على الويب',
+    version: 'الإصدار',
+    logout: 'تسجيل الخروج',
+    // 29 Change password sheet
+    cpTitle: 'تغيير كلمة المرور',
+    cpBody: 'نرسل لك رابط تأكيد على بريدك، ومنه تختار كلمة مرور جديدة تشتغل في البوابة والتطبيق.',
+    cpSend: 'أرسل الرابط',
+  },
   nav: {
     label: 'التنقل الرئيسي',
     tasks: 'المهام',
@@ -121,6 +202,8 @@ export const ar = {
     shared: 'مشتركة',
     yourCommittee: 'لجنتك',
     path: 'مسار المهمة',
+    dueToday: 'آخر يوم',
+    overdue: 'متأخرة',
     // 07 / 10 / 12 / 13 Task detail
     title: 'تفاصيل المهمة',
     /** «أنشأها فيصل» / «أنشأتها هيفاء» */

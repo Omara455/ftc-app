@@ -60,7 +60,7 @@ export const daysUntil = (d: string | Date, now = new Date()) =>
 
 /**
  * Relative past time as in the designs: «الحين», «قبل دقيقة», «قبل ساعتين», «قبل 3 ساعات»,
- * «أمس», «قبل يومين», then the date («15 نوفمبر») after a week.
+ * «أمس», «قبل يومين», «الأسبوع الماضي», then the date («15 نوفمبر») after two weeks.
  */
 export function ago(d: string | Date, now = new Date()): string {
   const x = toDate(d);
@@ -72,9 +72,16 @@ export function ago(d: string | Date, now = new Date()): string {
   if (days === 0) return `قبل ${plural(hours, 'ساعة', 'ساعتين', 'ساعات', 'ساعة')}`;
   if (days === 1) return 'أمس';
   if (days < 7) return `قبل ${plural(days, 'يوم', 'يومين', 'أيام', 'يوماً')}`;
+  if (days < 14) return 'الأسبوع الماضي';
   return dayMonth(x);
 }
 
 /** Same as `ago`, but «اليوم» instead of hours/minutes (stepper sub-labels). */
 export const dayAgo = (d: string | Date, now = new Date()) =>
   daysUntil(now, toDate(d)) === 0 ? 'اليوم' : daysUntil(now, toDate(d)) === 1 ? 'أمس' : dayMonth(d);
+
+/** Whole days left in the current month, today included («باقي 13 يوماً»). */
+export function daysLeftInMonth(now = new Date()): number {
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  return last - now.getDate() + 1;
+}
