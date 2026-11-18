@@ -80,15 +80,24 @@ export function leagueFor(hours: number): League {
 
 // Committee keys/labels/icons: confirm against the portal's committee table
 // (projects + finance labels and the pr/projects/finance icons are not yet verified).
+// `text` = chip label colour (a lighter shade of `fg`); chip background = tint(fg, 0.14),
+// except tech, which uses the brand tint as in the artboards. projects/finance text shades
+// are not in any artboard yet (slate-300 / yellow-300 picked to match the others).
 export const committee = {
-  tech: { fg: '#B49BF5', label: 'التقنية', icon: 'Code' },
-  events: { fg: '#F472B6', label: 'الفعاليات', icon: 'PartyPopper' },
-  innovation: { fg: '#FBBF24', label: 'الابتكار', icon: 'Lightbulb' },
-  pr: { fg: '#60A5FA', label: 'العلاقات العامة', icon: 'Handshake' },
-  media: { fg: '#FB923C', label: 'الإعلامية', icon: 'Megaphone' },
-  hr: { fg: '#4ADE80', label: 'الموارد البشرية', icon: 'Users' },
-  projects: { fg: '#94A3B8', label: 'إدارة المشاريع', icon: 'FolderKanban' },
-  finance: { fg: '#FACC15', label: 'المالية', icon: 'Wallet' },
+  tech: {
+    fg: '#B49BF5',
+    text: '#C4A5FF',
+    bg: 'rgba(116,73,194,0.18)',
+    label: 'التقنية',
+    icon: 'Code',
+  },
+  events: { fg: '#F472B6', text: '#F9A8D4', label: 'الفعاليات', icon: 'PartyPopper' },
+  innovation: { fg: '#FBBF24', text: '#FCD34D', label: 'الابتكار', icon: 'Lightbulb' },
+  pr: { fg: '#60A5FA', text: '#93C5FD', label: 'العلاقات العامة', icon: 'Handshake' },
+  media: { fg: '#FB923C', text: '#FDBA74', label: 'الإعلامية', icon: 'Megaphone' },
+  hr: { fg: '#4ADE80', text: '#86EFAC', label: 'الموارد البشرية', icon: 'Users' },
+  projects: { fg: '#94A3B8', text: '#CBD5E1', label: 'إدارة المشاريع', icon: 'FolderKanban' },
+  finance: { fg: '#FACC15', text: '#FDE047', label: 'المالية', icon: 'Wallet' },
 } as const;
 
 // Avatar ring by gender (as in the portal)
@@ -129,13 +138,15 @@ export type FontWeight = keyof typeof font.family;
 export const type = {
   display: { fontSize: 30, lineHeight: 41, weight: 'extrabold' }, // 30/800 · 1.35
   title: { fontSize: 22, lineHeight: 32, weight: 'extrabold' }, // 22/800 · 1.45 tab headline
-  heading: { fontSize: 17, lineHeight: 26, weight: 'bold' }, // 17/700 · 1.5 section heading
-  header: { fontSize: 16, lineHeight: 24, weight: 'bold' }, // stack header title
+  // Screens leave these line heights unset, so Cairo's default (~1.875) applies; the
+  // artboards win over Foundations' 1.5 here.
+  heading: { fontSize: 17, lineHeight: 32, weight: 'bold' }, // 17/700 section heading
+  header: { fontSize: 16, lineHeight: 30, weight: 'bold' }, // stack header title
   cardTitle: { fontSize: 15.5, lineHeight: 23, weight: 'bold' }, // 15.5/700 · 1.5
   body: { fontSize: 14.5, lineHeight: 26, weight: 'regular' }, // 14.5/400 · 1.8
-  meta: { fontSize: 13, lineHeight: 21, weight: 'medium' }, // 13/500
-  chip: { fontSize: 12, lineHeight: 20, weight: 'semibold' },
-  caption: { fontSize: 11.5, lineHeight: 16, weight: 'semibold' }, // 11.5/600 tab labels
+  meta: { fontSize: 13, lineHeight: 24, weight: 'medium' }, // 13/500
+  chip: { fontSize: 12, lineHeight: 22, weight: 'semibold' },
+  caption: { fontSize: 11.5, lineHeight: 22, weight: 'semibold' }, // 11.5/600 tab labels
   stat: { fontSize: 22, lineHeight: 31, weight: 'extrabold' },
 } as const satisfies Record<string, { fontSize: number; lineHeight: number; weight: FontWeight }>;
 export type TypeVariant = keyof typeof type;

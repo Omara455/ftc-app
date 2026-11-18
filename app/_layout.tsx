@@ -7,7 +7,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/cairo';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -17,8 +17,9 @@ import { I18nManager, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { queryClient } from '@/api/queryClient';
+import { persistOptions, queryClient } from '@/api/queryClient';
 import { AuthProvider, useAuth } from '@/auth/AuthProvider';
+import '@/lib/network'; // wires NetInfo into TanStack's onlineManager
 import { color } from '@/theme/tokens';
 
 // RTL everywhere. Native builds are also forced RTL by the expo-localization
@@ -50,14 +51,14 @@ export default function RootLayout() {
     // Native ignores it (RTL there comes from I18nManager + the expo-localization plugin).
     <GestureHandlerRootView style={styles.root} {...({ dir: 'rtl' } as object)}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
           <AuthProvider>
             <BottomSheetModalProvider>
               <StatusBar style="light" />
               <RootStack />
             </BottomSheetModalProvider>
           </AuthProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

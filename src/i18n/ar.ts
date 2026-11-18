@@ -85,19 +85,91 @@ export const ar = {
     joinedOf: (joined: number, capacity: number) => `${joined} من ${capacity} منضمين`,
   },
   tasks: {
+    // 06 Tasks
     /** «مهام اللجنة التقنية» under the Tasks headline */
     committeeTasks: (committee: string) => `مهام اللجنة ${committee}`,
+    summaryLabel: 'ملخص ساعاتك',
+    termHours: 'ساعة هالترم',
+    pending: 'بانتظار الاعتماد',
+    done: 'مهام منجزة',
+    doneLink: 'مهام منجزة ›',
+    mine: 'مهامي',
+    available: 'متاحة للجنتك',
+    /** Leader's note on a returned card: «فيصل: …» */
+    noteFrom: (name: string, note: string) => `${name}: ${note}`,
+    /** «سلّمتها قبل ساعتين» — `ago` is already phrased («قبل ساعتين») */
+    submittedAgo: (ago: string) => `سلّمتها ${ago}`,
+    // 15 Empty
+    emptyTitle: 'ما فيه مهام الحين',
+    emptyBody: 'أول ما تنزل مهمة للجنتك بيوصلك إشعار.',
+    howTitle: 'كيف تكسب ساعاتك؟',
+    how: [
+      { title: 'انضم لمهمة من لجنتك', body: 'كل مهمة مكتوب عليها ساعاتها وموعدها' },
+      { title: 'سلّم شغلك', body: 'بملاحظة أو رابط أو ملف' },
+      { title: 'تنحسب لك الساعات', body: 'بعد اعتماد القائد، وترتقي في المستويات' },
+    ],
+    loadingLabel: 'جاري تحميل المهام',
+    // 16 History
+    historyTitle: 'مهامي المنجزة',
+    periodLabel: 'الفترة',
+    thisTerm: 'هالترم',
+    allTerms: 'كل الترمات',
+    approvedHours: 'ساعة معتمدة',
   },
   task: {
     join: 'انضم للمهمة',
     shared: 'مشتركة',
     yourCommittee: 'لجنتك',
     path: 'مسار المهمة',
+    // 07 / 10 / 12 / 13 Task detail
+    title: 'تفاصيل المهمة',
+    /** «أنشأها فيصل» / «أنشأتها هيفاء» */
+    createdBy: (gender: 'male' | 'female') => (gender === 'female' ? 'أنشأتها' : 'أنشأها'),
+    hours: 'الساعات',
+    deadline: 'الموعد النهائي',
+    time: 'الوقت',
+    place: 'المكان',
+    contact: 'للتواصل',
+    description: 'الوصف',
+    people: 'المنضمّين',
+    /** «المنضمّين · 2» */
+    peopleCount: (n: number) => `المنضمّين · ${n}`,
+    you: 'أنت',
+    /** «سلمان ومحمد · 2 من 4» */
+    namesOf: (names: string, joined: number, capacity: number | null) =>
+      capacity == null ? `${names} · ${joined}` : `${names} · ${joined} من ${capacity}`,
+    // stepper
+    stepJoined: 'انضممت',
+    stepSubmit: 'التسليم',
+    stepSubmitted: 'سلّمت',
+    stepReview: 'المراجعة',
+    stepReturned: 'رجعت لك',
+    stepApprove: 'الاعتماد',
+    yourTurn: 'دورك الحين',
+    fromLeader: 'من القائد',
+    /** «عند فيصل» */
+    withReviewer: (name: string) => `عند ${name}`,
+    // 12 Submitted
+    /** «وصل تسليمك لفيصل» */
+    reachedReviewer: (name: string) => `وصل تسليمك ل${name}`,
+    /** «… أول ما يراجعه» / «… أول ما تراجعه» (reviewer's gender) */
+    notifyOnReview: (gender: 'male' | 'female') =>
+      gender === 'female' ? 'بيوصلك إشعار أول ما تراجعه' : 'بيوصلك إشعار أول ما يراجعه',
+    yourSubmission: 'تسليمك',
+    // 13 Returned
+    /** «ملاحظة فيصل» */
+    noteBy: (name: string) => `ملاحظة ${name}`,
+    previousSubmission: 'تسليمك السابق',
+    // CTAs (Phase 2 — behind flags.writes)
+    submit: 'سلّم المهمة',
+    leave: 'انسحاب',
+    editSubmission: 'تعديل التسليم',
+    resubmit: 'عدّل وأعد التسليم',
   },
   offline: {
     title: 'ما فيه اتصال بالإنترنت',
-    /** "آخر تحديث قبل 10 دقائق" — `ago` is already phrased, e.g. "10 دقائق" */
-    lastUpdated: (ago: string) => `آخر تحديث قبل ${ago}`,
+    /** «آخر تحديث قبل 10 دقائق» — `ago` is already phrased («قبل 10 دقائق», «الحين») */
+    lastUpdated: (ago: string) => `آخر تحديث ${ago}`,
     retry: 'حاول مجددًا',
     writesLocked: 'الانضمام والتسليم يحتاجون اتصال. نحفظ لك أي تسليم وترسله أول ما يرجع الاتصال.',
   },

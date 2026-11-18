@@ -4,6 +4,7 @@ import { Txt } from '@/components/Txt';
 import {
   color,
   hue,
+  committee as committees,
   league as leagues,
   radius,
   taskState,
@@ -51,9 +52,13 @@ export function Chip({ label, fg, bg, dot, dotSize = 6, bold, size = 12 }: ChipP
 // Presets used across the screens ----------------------------------------------
 
 /** Committee name chip, e.g. «التقنية». */
-export const CommitteeChip = ({ label }: { label: string }) => (
-  <Chip label={label} fg={color.highlight} bg={tint(color.brand, 0.18)} />
-);
+export function CommitteeChip({ label, committeeKey }: { label: string; committeeKey?: string }) {
+  const c = committeeKey ? committees[committeeKey as keyof typeof committees] : undefined;
+  if (!c || !('text' in c)) {
+    return <Chip label={label} fg={color.highlight} bg={tint(color.brand, 0.18)} />;
+  }
+  return <Chip label={label} fg={c.text} bg={'bg' in c ? c.bg : tint(c.fg, 0.14)} />;
+}
 
 /** Hours chip on available tasks, e.g. «3 ساعات». */
 export const HoursChip = ({ label }: { label: string }) => (
