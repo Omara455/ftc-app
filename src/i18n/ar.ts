@@ -77,7 +77,7 @@ export const ar = {
     showTeams: (teams: string) => `عرض الفرق، ${teams}`,
     // 21 Search
     searchLabel: 'ابحث عن عضو',
-    // ⚠️ Not in the design: search with no results. Proposed wording, needs sign-off.
+    // Not in the design: search with no results. Approved in review of PR #4.
     noResults: 'ما لقينا أحد بهالاسم.',
     // 22 Committee
     committeeTitle: 'اللجنة',

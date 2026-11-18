@@ -8,6 +8,7 @@ Read these before writing code:
 | File | What it is |
 |---|---|
 | **Design (Claude Design artifact)** | https://claude.ai/artifact/UNWakGr4dtHSoDHWFqCSSG — 30 artboards numbered 01–30 + Foundations, with dev notes on the canvas. **This is the visual source of truth.** Read it for exact sizes, colours, radii and copy. |
+| **`docs/PROGRESS.md`** | **What's built (M0–M4), every approved decision, open items and what's next. Read it at the start of every session and update it at the end of every milestone.** |
 | `docs/SCREENS.md` | Every screen: route, purpose, data, actions, where it links to. |
 | `docs/API.md` | The `/api/mobile/v1` contract and response shapes. The backend lives in the **portal repo**, not here. |
 | `docs/PLAN.md` | Build order and milestones. Follow it. |
