@@ -7,6 +7,7 @@ import { authApi } from '@/api/endpoints';
 import { persister, queryClient, queryKeys } from '@/api/queryClient';
 import { flags } from '@/config/flags';
 import { authenticate, biometricAvailable, biometricEnabled } from '@/lib/biometric';
+import { unregisterPush } from '@/lib/push';
 import { keys, storage } from '@/lib/storage';
 
 type Status = 'booting' | 'signedOut' | 'signedIn';
@@ -31,6 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearLocal = useCallback(async () => {
     setToken(null);
     await storage.remove(keys.token);
+    // A new session registers its own push token (M6).
+    await storage.remove(keys.pushToken);
     queryClient.clear();
     await persister.removeClient(); // the offline cache must not outlive the session
     setStatus('signedOut');
@@ -81,6 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Stop pushes to this device while the token still works (screen 30: «بتوقف الإشعارات»).
+    await unregisterPush();
     try {
       await authApi.logout();
     } catch {

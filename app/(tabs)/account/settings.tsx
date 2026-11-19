@@ -1,6 +1,7 @@
 // Screen 27: settings.
 //   الحساب      edit profile (Phase 2, flags.writes) · change password (sheet 29) · biometric login
-//   الإشعارات   4 toggles — Phase 2 (flags.notifications), saved server-side in M6
+//   الإشعارات   4 toggles — Phase 2 (flags.notifications), saved server-side
+//               (GET/PATCH /me/notification-settings), locked offline
 //   عن التطبيق  open the portal · version
 //   logout (sheet 30)
 import Constants from 'expo-constants';
@@ -10,6 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useMe } from '@/api/hooks';
+import { useNotificationSettings, useUpdateNotificationSettings } from '@/api/notifications';
 import { Button } from '@/components/Button';
 import { Header } from '@/components/Header';
 import { ListGroup, ListRow } from '@/components/ListRow';
@@ -29,6 +31,7 @@ import {
   setBiometricEnabled,
 } from '@/lib/biometric';
 import { useScreenInsets } from '@/lib/insets';
+import { useIsOffline } from '@/lib/network';
 import { color, space } from '@/theme/tokens';
 
 const t = ar.settings;
@@ -40,13 +43,9 @@ export default function Settings() {
   const changePassword = useRef<SheetRef>(null);
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioOn, setBioOn] = useState(false);
-  // Phase 2: local only until GET/PATCH /me/notification-settings exists (M6).
-  const [notify, setNotify] = useState({
-    newTasks: true,
-    reviewResult: true,
-    deadlineReminder: true,
-    leagueUpdates: false,
-  });
+  const notify = useNotificationSettings().data;
+  const updateNotify = useUpdateNotificationSettings();
+  const offline = useIsOffline();
 
   useEffect(() => {
     void (async () => {
@@ -98,7 +97,7 @@ export default function Settings() {
           ) : null}
         </ListGroup>
 
-        {flags.notifications ? (
+        {flags.notifications && notify ? (
           <ListGroup label={t.notifications}>
             {(
               [
@@ -114,7 +113,8 @@ export default function Settings() {
                 trailing={
                   <Toggle
                     value={notify[key]}
-                    onValueChange={(v) => setNotify((n) => ({ ...n, [key]: v }))}
+                    onValueChange={(v) => updateNotify.mutate({ [key]: v })}
+                    disabled={offline}
                     accessibilityLabel={label}
                   />
                 }

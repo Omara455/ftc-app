@@ -34,6 +34,13 @@ export const weekday = (d: string | Date) => WEEKDAYS[toDate(d).getDay()];
 /** «الأربعاء 19 نوفمبر» */
 export const weekdayDayMonth = (d: string | Date) => `${weekday(d)} ${dayMonth(d)}`;
 
+/** «9:00 ص», «4:30 م» (time of a notification, screen 17) */
+export const clockTime = (d: string | Date) => {
+  const x = toDate(d);
+  const h = x.getHours();
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(x.getMinutes()).padStart(2, '0')} ${h >= 12 ? 'م' : 'ص'}`;
+};
+
 /** «أكتوبر» (month only, achievements grid) */
 export const monthName = (d: string | Date) => MONTHS[toDate(d).getMonth()];
 

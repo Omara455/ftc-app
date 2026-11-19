@@ -25,6 +25,12 @@ import {
 } from '@/mocks/community';
 import { meFixture, MOCK_PASSWORD } from '@/mocks/me';
 import {
+  markNotificationsRead,
+  notificationSettings,
+  notificationsPage,
+  updateNotificationSettings,
+} from '@/mocks/notifications';
+import {
   claimTask,
   emptyTasksFixture,
   historyFixture,
@@ -35,7 +41,7 @@ import {
 } from '@/mocks/tasks';
 
 import { ApiError } from './errors';
-import type { Me, ProfileInput, SubmitInput } from './types';
+import type { Me, NotificationSettings, ProfileInput, SubmitInput } from './types';
 
 // Edit profile (28) changes, kept in memory like the task writes.
 let profile: Pick<Me, 'bio' | 'photoUrl'> = { bio: meFixture.bio, photoUrl: meFixture.photoUrl };
@@ -157,7 +163,21 @@ export async function mockFetch(
       return ok(leaderboardFixture());
     case 'GET /achievements':
       return ok(achievementsFixture());
+    // ── M6: notifications, settings, devices ──
+    case 'GET /notifications':
+      if (SCENARIO === 'empty') return ok({ items: [], nextCursor: null });
+      return ok(notificationsPage(params.get('cursor')));
+    case 'POST /notifications/read':
+      markNotificationsRead((body as { ids?: number[] } | undefined)?.ids);
+      return ok(null, 204);
+    case 'GET /me/notification-settings':
+      return ok(notificationSettings());
+    case 'PATCH /me/notification-settings':
+      return ok(updateNotificationSettings(body as Partial<NotificationSettings>));
+    case 'POST /devices':
+      return ok(null, 204);
   }
+  if (method === 'DELETE' && pathname.startsWith('/devices/')) return ok(null, 204);
 
   const byId = /^GET \/(committees|members)\/(\d+)$/.exec(route);
   if (byId) {

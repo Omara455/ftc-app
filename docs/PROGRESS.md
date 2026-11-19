@@ -2,7 +2,7 @@
 
 **Read this first in a new session**, after `CLAUDE.md`. It records what's built, every decision the project owner has approved, what's still open, and what comes next. Keep it up to date at the end of every milestone.
 
-Last updated: 2026-11-19, after M5 was merged (PR #5) and its review follow-up opened (PR #6).
+Last updated: 2026-11-19, M6 built on `m6-notifications` (PR open, not merged).
 
 ---
 
@@ -15,8 +15,8 @@ Last updated: 2026-11-19, after M5 was merged (PR #5) and its review follow-up o
 | M2 Auth and shell | 01–05, 30 | #2 | ✅ merged |
 | M3 Tasks (read) | 06, 07, 10, 12, 13, 15, 16, 18, 19 | #3 | ✅ merged |
 | M4 Community, Leaderboard, Account | 20–27, **29** (pulled forward) | #4 | ✅ merged |
-| **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5, #6 | ✅ #5 merged · #6 (review follow-up) open |
-| M6 Notifications (Phase 2) | 05 (`POST /devices`), 17, 27 toggles | — | after M5 |
+| **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5, #6 | ✅ merged |
+| **M6 Notifications (Phase 2)** | 05 (`POST /devices`), 17, 27 toggles | #7 | **in review** |
 
 Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against `/api/mobile/v1` on staging. The Phase 1 screens are all built. That release needs the portal team's API (see §4) and an on-device check.
 
@@ -31,10 +31,11 @@ Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against
   - `EXPO_PUBLIC_MOCK_SCENARIO=empty|error|deadlines` switches scenarios, and `EXPO_PUBLIC_MOCK_DELAY` sets the response delay.
 - **Auth:** `src/auth/AuthProvider.tsx`. The token is in SecureStore (localStorage on web). The gate uses `Stack.Protected`, and the biometric check runs at boot.
 - **Writes (M5):** `src/api/mutations.ts` holds join / leave / submit / edit profile with optimistic updates and rollback. The mock keeps write state in memory until reload; a second claim returns 409.
+- **Notifications (M6):** `src/api/notifications.ts` (infinite list, unread state, mark-as-read, settings), `src/lib/push.ts` (register / unregister / type → screen), `src/features/notifications/PushBridge.tsx` (mounted while signed in: registers, refreshes on a push, opens a tapped push's screen, also from a cold start). Native only; web never registers.
 - **Flags:** `src/config/flags.ts`. `writes` and `notifications` are off by default; turn them on with `EXPO_PUBLIC_FLAG_WRITES=1` / `EXPO_PUBLIC_FLAG_NOTIFICATIONS=1`.
 - **Tooling:**
   - `npm run shot` (web screenshot vs artboard)
-  - `npm run smoke` (30-step Playwright E2E against mocks, writes on, also in CI)
+  - `npm run smoke` (34-step Playwright E2E against mocks, writes and notifications on, also in CI)
   - `scripts/generate-icons.mjs`
   - `/dev/kit`
   - CI runs lint, typecheck, prettier and smoke.
@@ -167,6 +168,10 @@ All of these are in `docs/API.md` and already returned by the mocks. The owner i
   - `keepFiles[]` on submit (keep already-uploaded files when editing)
   - event tasks: `canSubmit: false` until the event is over
   - `POST /me` + `_method=PATCH` for the multipart profile update, returning `Me`
+- **M6:**
+  - `DELETE /devices/{expoPushToken}` on logout (and drop push tokens when the Sanctum token is revoked)
+  - push `data`: `{notificationId, type, taskId?}`
+  - `Notification.league?` for the league item's colour
 
 When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BASE_URL`. Check the shapes against `src/api/types.ts`.
 
@@ -177,25 +182,41 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 - [ ] **Device check on Android**, by the owner (`docs/DEVICE.md`). Nothing reported yet.
 - [ ] **Committee names** for projects and finance: to be confirmed with the club.
 - [ ] **Android package name:** confirm `com.ftcksu.app` before release.
-- [ ] **Portal team:** review and implement the M3/M4/M5 API proposals (the owner is passing the M5 ones on) and the Phase 2 endpoints.
+- [ ] **Portal team:** review and implement the M3–M6 API proposals and the Phase 2 endpoints.
+- [ ] **Push setup:** `eas init` (projectId) and Firebase/FCM credentials, per `docs/DEVICE.md` → «Push notifications». Without them the app can't get a push token.
+- [ ] **M6 review:** the choices and copy listed in §5.
 
 **Possible later features** (not planned, don't build without asking):
 - Offline submission queue: save a submission made offline and send it when the connection returns. Would need new screen-19 copy.
 
 ---
 
-## 5. Next: M6, notifications (Phase 2)
+## 5. M6 in review
 
-M5 is merged (PR #5). Its review follow-up is PR #6: check `gh pr view 6 --json state` says MERGED before branching for M6.
+**M6 (branch `m6-notifications`, PR #7)** built screen 17, push registration and deep links, and the server-synced toggles on 27, behind `flags.notifications`. The choices below are **waiting for the owner's review**. Move them into §2 once approved.
+- **Grouping:** «اليوم», «هالأسبوع» (up to 6 days back), then **«أقدم»** for anything older (not in the design).
+- **Time on a row:** relative («قبل ساعة», «أمس», «قبل 4 أيام»), except **today's deadline reminder, which shows its clock time** («9:00 ص») as in the artboard.
+- **Tapping a row** marks it read (not while offline) and opens its screen. Back returns to 17.
+- **«تحديد الكل كمقروء»** only shows while something is unread and you're online.
+- **The bell** on Tasks gets the glow dot while anything loaded is unread, and its label says «الإشعارات، غير مقروء».
+- **Settings toggles** save immediately (optimistic, rolled back on error) and are disabled offline. The section only shows once the settings have loaded.
+- **Push:**
+  - Shown as a banner even while the app is open.
+  - Asked for on screen 05 only; there's no "enable in Settings" path if the member said no.
+  - Registered again on each start if the token changed.
+  - Unregistered on logout, before the session is revoked.
+- **Copy not in the design, needs sign-off:**
+  - «أقدم» (group older than a week)
+  - empty state: «ما فيه إشعارات الحين» / «أول ما يصير شي يخصّك، بتلقاه هنا.»
+- `Toggle` now sets `aria-checked`, so web screen readers (and smoke) can see its state.
 
-- Register the Expo push token (`POST /devices`).
-- Deep links from notifications, using the type → screen map in SCREENS.md.
-- Notifications list (17) with mark-as-read.
-- Settings toggles synced via `/me/notification-settings`.
+**Next:** the Phase 1 release still needs the portal API and the device check. There's no M7 in PLAN.md, so ask the owner what comes after M6.
 
 ---
 
 ## 6. Gotchas (learned the hard way)
+
+- **Screen 17 lives in the root stack:** opening a task from it keeps 17 mounted underneath, so there are two «رجوع» buttons in the DOM. In smoke, click the visible one (`visibleBack()`).
 
 - **Typed routes** only regenerate when the dev server runs. After adding a route: `CI=1 timeout 90 npx expo start --port 8095`, then `npm run typecheck`. CI doesn't have `.expo/types`, so it's unaffected.
 - **Git Bash path rewriting:** it rewrites `/dev/kit`-style arguments, so pass routes to `shot.mjs` without the leading slash.
@@ -211,4 +232,4 @@ M5 is merged (PR #5). Its review follow-up is PR #6: check `gh pr view 6 --json 
 - **gorhom sheets read `paddingBottom` from a plain style object.** Pass `BottomSheetView` `style` and `BottomSheetScrollView` `contentContainerStyle` as one object (no arrays, no `false` entries), and never pass `snapPoints={undefined}`. Otherwise the 34pt bottom padding disappears.
 - **`BottomSheetTextInput` crashes on web** (`currentlyFocusedInput`). `TextField inSheet` uses it on native only.
 - **`npm run shot`** runs `--fill` before `--click`, so it can't type into a sheet; smoke covers that. `--click` can be repeated (applied in order).
-- **Smoke tests:** `scripts/smoke.mjs`, 30 steps, built with `EXPO_PUBLIC_FLAG_WRITES=1`. Write steps after the first navigate inside the app: a reload resets the mock's write state. The hours-privacy regex is `/\d+\s*ساع|\+\d/`, so achievement names like «خمسون ساعة» are allowed.
+- **Smoke tests:** `scripts/smoke.mjs`, 34 steps, built with `EXPO_PUBLIC_FLAG_WRITES=1` and `EXPO_PUBLIC_FLAG_NOTIFICATIONS=1` (so first login goes through screen 05). Write steps after the first navigate inside the app: a reload resets the mock's write state. The hours-privacy regex is `/\d+\s*ساع|\+\d/`, so achievement names like «خمسون ساعة» are allowed.

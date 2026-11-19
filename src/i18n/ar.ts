@@ -304,6 +304,17 @@ export const ar = {
     committeeRole: 'اللجنة والدور',
     hrNote: 'الاسم والرقم الجامعي واللجنة تعدّلها الموارد البشرية في البوابة.',
   },
+  notifications: {
+    // 17
+    title: 'الإشعارات',
+    markAll: 'تحديد الكل كمقروء',
+    today: 'اليوم',
+    thisWeek: 'هالأسبوع',
+    // Not in the design — need sign-off (M6):
+    older: 'أقدم',
+    emptyTitle: 'ما فيه إشعارات الحين',
+    emptyBody: 'أول ما يصير شي يخصّك، بتلقاه هنا.',
+  },
   offline: {
     title: 'ما فيه اتصال بالإنترنت',
     /** «آخر تحديث قبل 10 دقائق» — `ago` is already phrased («قبل 10 دقائق», «الحين») */

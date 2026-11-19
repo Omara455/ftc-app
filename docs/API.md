@@ -42,6 +42,7 @@
 | GET | `/notifications?cursor=` | 17 | `{items: Notification[], nextCursor}` |
 | POST | `/notifications/read` | 17 | `{ids?: number[]}`. Marks everything read if `ids` is empty |
 | POST | `/devices` | 05 | `{expoPushToken, platform}`. Delete on logout |
+| DELETE | `/devices/{expoPushToken}` | 30 | M6 proposal: called on logout, before `/auth/logout`. `204` |
 | GET/PATCH | `/me/notification-settings` | 27 | `{newTasks, reviewResult, deadlineReminder, leagueUpdates}` (booleans) |
 | PATCH | `/me` | 28 | multipart: `bio` (≤160), `photo?`. **Only these two fields.** Returns `Me`. Sent as `POST /me` with `_method=PATCH` (PHP doesn't parse multipart bodies on PATCH) |
 
@@ -95,10 +96,18 @@ type Activity =    // M4 proposal
   | { type: 'league_up'; text: string; at: string; league: League };
 interface RankRow { position: number; id: number; name: string; gender: Gender; committee: CommitteeRef; hours: number }
 interface Achievement { id: 'journey-start'|'first-task'|'tasks-5'|'tasks-25'|'hours-10'|'hours-50'|'hours-100'|'week-top1'|'leadership'; name: string; description: string; unlockedAt: string | null; progress?: number; target?: number }
-interface Notification { id: number; type: 'task_returned'|'task_new'|'deadline'|'task_approved'|'achievement'|'league'; title: string; body: string; taskId?: number; readAt: string | null; createdAt: string }
+interface Notification { id: number; type: 'task_returned'|'task_new'|'deadline'|'task_approved'|'achievement'|'league'; title: string; body: string; taskId?: number;
+  league?: League;                   // M6 proposal: colour of a `league` item
+  readAt: string | null; createdAt: string }
 ```
 
 **Privacy:** `RankRow.hours` exists only on `/leaderboard`. `MemberCard` never includes hours.
+
+**M6 proposals (notifications):**
+- **`DELETE /devices/{expoPushToken}`** on logout. Also drop a device's push tokens when its Sanctum token is revoked, because a logout made offline can't send the DELETE.
+- **Push payload `data`:** `{notificationId, type, taskId?}` on every push, so tapping it opens the right screen and marks that notification read.
+- **`Notification.league?`** on `league` items (the league reached), so the icon uses that league's colour.
+- `GET /notifications` returns newest first; `nextCursor` is opaque to the app.
 
 **M5 proposals (writes):**
 - **`keepFiles[]` on submit:** editing a submission (12) or resubmitting (13) opens the form with the files already uploaded. The app sends the `url`s of the ones the member kept as `keepFiles[]`; any others are deleted. New files go in `files[]` as before. (`FileRef` has no id, so the URL is the key. An `id` would be fine too.)

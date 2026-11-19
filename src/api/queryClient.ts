@@ -50,4 +50,6 @@ export const queryKeys = {
   search: (q: string) => ['community', 'search', q] as const,
   leaderboard: ['leaderboard'] as const,
   achievements: ['achievements'] as const,
+  notifications: ['notifications', 'list'] as const,
+  notificationSettings: ['notifications', 'settings'] as const,
 };
