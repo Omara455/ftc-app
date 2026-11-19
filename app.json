@@ -8,8 +8,15 @@
     "scheme": "ftcapp",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0C0A18",
+    "runtimeVersion": { "policy": "appVersion" },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ftcksu.app",
+      "infoPlist": { "ITSAppUsesNonExemptEncryption": false }
     },
     "android": {
       "package": "com.ftcksu.app",
@@ -58,7 +65,8 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -21,6 +21,7 @@ import { persistOptions, queryClient } from '@/api/queryClient';
 import { AuthProvider, useAuth } from '@/auth/AuthProvider';
 import { PushBridge } from '@/features/notifications/PushBridge';
 import '@/lib/network'; // wires NetInfo into TanStack's onlineManager
+import { withSentry } from '@/lib/sentry'; // crash reporting (off in mock mode)
 import { color } from '@/theme/tokens';
 
 // RTL everywhere. Native builds are also forced RTL by the expo-localization
@@ -37,7 +38,9 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 SplashScreen.preventAutoHideAsync();
 SystemUI.setBackgroundColorAsync(color.bg);
 
-export default function RootLayout() {
+export default withSentry(RootLayout);
+
+function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Cairo_400Regular,
     Cairo_500Medium,
