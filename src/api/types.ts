@@ -217,6 +217,33 @@ export interface AchievementsResponse {
   items: Achievement[];
 }
 
+// ── Writes (Phase 2, M5) ─────────────────────────────────────────────────────
+
+/** A file picked on the device, not uploaded yet. `file` is the browser File on web. */
+export interface LocalFile {
+  uri: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file?: Blob;
+}
+
+/** POST /tasks/{id}/submit (multipart). */
+export interface SubmitInput {
+  note: string;
+  link: string | null;
+  /** New files, sent as `files[]`. */
+  files: LocalFile[];
+  /** M5 proposal: URLs of already-submitted files to keep when editing (`keepFiles[]`). */
+  keepFiles: string[];
+}
+
+/** PATCH /me (multipart): only these two fields. */
+export interface ProfileInput {
+  bio: string;
+  photo: LocalFile | null;
+}
+
 /** M4 proposal: typed activity entries for «آخر النشاطات» (icon + «+3 ساعات»). */
 export type Activity =
   | { type: 'task_approved'; text: string; at: string; hours: number }

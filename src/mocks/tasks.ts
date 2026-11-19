@@ -2,6 +2,7 @@
 // artboards; dates are relative to "now" so «باقي 3 أيام» etc. stay true.
 import type {
   CommitteeRef,
+  FileRef,
   PersonRef,
   Task,
   TaskHistoryResponse,
@@ -225,11 +226,116 @@ function summary(t: Task): TaskSummary {
   };
 }
 
+// Order of the fixtures; which list a task lands in follows its (mutable) state.
+const ORDER = [101, 102, 103, 301, 302, 303];
+
 export const tasksFixture = (): TasksResponse => ({
-  mine: [101, 102, 103].map((id) => summary(tasks[id])),
-  available: [301, 302, 303].map((id) => summary(tasks[id])),
-  stats: { termHours: 14, pendingHours: 2, tasksDone: 6 },
+  mine: ORDER.filter((id) => tasks[id].myState && tasks[id].myState !== 'approved').map((id) =>
+    summary(tasks[id]),
+  ),
+  available: ORDER.filter((id) => tasks[id].myState === null && tasks[id].canClaim).map((id) =>
+    summary(tasks[id]),
+  ),
+  stats: {
+    termHours: 14,
+    pendingHours: ORDER.filter((id) => tasks[id].myState === 'submitted').reduce(
+      (sum, id) => sum + tasks[id].hours,
+      0,
+    ),
+    tasksDone: 6,
+  },
 });
+
+// ── Writes (M5): the mock keeps state in memory until the app reloads ────────
+
+const ME = { id: 1, name: 'عبدالله القحطاني', gender: 'male' as const };
+
+/** An event task (has a time slot) can only be submitted once the event is over. */
+const eventOver = (t: Task) => t.timeFrom == null || Date.now() >= new Date(t.deadline).getTime();
+
+export type MockWriteResult = { status: number; json: unknown };
+
+export function claimTask(id: number): MockWriteResult {
+  const t = tasks[id];
+  if (!t) return { status: 404, json: { message: 'Not found.' } };
+  if (t.myState !== null || (t.capacity != null && t.joinedCount >= t.capacity))
+    return { status: 409, json: { message: 'Task is full or already joined.' } };
+  tasks[id] = {
+    ...t,
+    myState: 'working',
+    myJoinedAt: new Date().toISOString(),
+    joinedCount: t.joinedCount + 1,
+    people: [{ ...ME, me: true, state: 'working' }, ...t.people],
+    canClaim: false,
+    canLeave: true,
+    canSubmit: eventOver(t),
+  };
+  return { status: 200, json: tasks[id] };
+}
+
+export function leaveTask(id: number): MockWriteResult {
+  const t = tasks[id];
+  if (!t) return { status: 404, json: { message: 'Not found.' } };
+  if (!t.canLeave) return { status: 403, json: { message: 'This action is unauthorized.' } };
+  tasks[id] = {
+    ...t,
+    myState: null,
+    myJoinedAt: null,
+    joinedCount: Math.max(0, t.joinedCount - 1),
+    people: t.people.filter((p) => !p.me),
+    mySubmission: null,
+    submittedAt: null,
+    canClaim: true,
+    canLeave: false,
+    canSubmit: false,
+    canEditSubmission: false,
+  };
+  return { status: 204, json: null };
+}
+
+export function submitTask(
+  id: number,
+  input: { note: string; link: string | null; files: FileRef[]; keepFiles: string[] },
+): MockWriteResult {
+  const t = tasks[id];
+  if (!t) return { status: 404, json: { message: 'Not found.' } };
+  if (!t.canSubmit && !t.canEditSubmission)
+    return { status: 403, json: { message: 'This action is unauthorized.' } };
+  const note = input.note.trim();
+  if (!note || note.length > 500) {
+    return {
+      status: 422,
+      json: { message: 'Invalid.', errors: { note: ['اكتب وش أنجزت (500 حرف بالكثير).'] } },
+    };
+  }
+  const now = new Date().toISOString();
+  const prev = t.mySubmission;
+  const kept = (prev?.files ?? []).filter((f) => input.keepFiles.includes(f.url));
+  tasks[id] = {
+    ...t,
+    myState: 'submitted',
+    submittedAt: now,
+    returnNote: null,
+    people: t.people.map((p) => (p.me ? { ...p, state: 'submitted' } : p)),
+    mySubmission: {
+      note,
+      link: input.link,
+      files: [...kept, ...input.files],
+      submittedAt: now,
+      returnedAt: null,
+      returnNote: null,
+      approvedAt: null,
+      history:
+        prev && t.myState === 'returned'
+          ? [{ note: prev.note, submittedAt: prev.submittedAt }, ...prev.history]
+          : (prev?.history ?? []),
+    },
+    canLeave: false,
+    canSubmit: false,
+    canEditSubmission: true,
+  };
+  return { status: 200, json: tasks[id] };
+}
 
 /** Screen 15: a member with nothing yet this term. */
 export const emptyTasksFixture = (): TasksResponse => ({

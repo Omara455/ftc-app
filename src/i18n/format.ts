@@ -39,5 +39,12 @@ export function fileSize(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1000))} ك.ب`;
 }
 
+/** «سلمان ومحمد» · «أنت، سلمان، ومحمد» (screen 09) */
+export function listAnd(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  if (names.length === 2) return `${names[0]} و${names[1]}`;
+  return `${names.slice(0, -1).join('، ')}، و${names.at(-1)}`;
+}
+
 /** First name only: «فيصل الدوسري» → «فيصل». */
 export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;

@@ -6,7 +6,7 @@
 //       --offline cuts the network after load (cached data + offline banner).
 //       --signed-in starts with the mock session token (to reach screens behind the auth gate).
 //       --fill="label=value" types into a field first (repeatable).
-//       --click="نص" taps an element by its text before the shot (open a sheet, a tab…).
+//       --click="نص" taps an element by its text before the shot (open a sheet, a tab…); repeatable.
 //       --height=6000 for a tall capture of a long scroll view, --debug to log page errors.
 //   node scripts/shot.mjs design Tasks [Foundations …]
 //       Renders artboards from design/artboards/<Name>.dc.html (a local copy of the
@@ -134,10 +134,10 @@ async function shoot(page, url, file) {
   if (!isDesign && process.argv.some((x) => x.startsWith('--fill='))) {
     await page.waitForTimeout(1200); // debounce + mock API before the shot
   }
-  const click = process.argv.find((a) => a.startsWith('--click='));
-  if (click && !isDesign) {
+  // Repeatable, in order: e.g. --click="انضم للمهمة" --click="تأكيد الانضمام" (sheet, then confirm).
+  for (const click of isDesign ? [] : process.argv.filter((a) => a.startsWith('--click='))) {
     await page.getByText(click.slice('--click='.length), { exact: true }).first().click();
-    await page.waitForTimeout(1200); // covers the mock API delay
+    await page.waitForTimeout(1200); // covers the mock API delay and the sheet animation
   }
   // --offline: load online (so the query cache fills), then cut the network (screen 19).
   if (flags.has('--offline') && !isDesign) {

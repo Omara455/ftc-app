@@ -12,24 +12,27 @@ type Props = {
   onBack?: () => void;
   /** Element at the end (left in RTL), e.g. «حفظ». Keeps the title centred. */
   end?: React.ReactNode;
+  /** Replaces the back button at the start, e.g. «إلغاء» on edit profile (28). */
+  start?: React.ReactNode;
   /** Set false when the header sits inside a design frame that already has the inset. */
   safeTop?: boolean;
 };
 
 /** Stack header: back (→) at the start, centred 16/700 title, optional action at the end. */
-export function Header({ title, onBack, end, safeTop = true }: Props) {
+export function Header({ title, onBack, end, start, safeTop = true }: Props) {
   const insets = useScreenInsets();
   return (
     <View style={[styles.header, safeTop && { marginTop: insets.top + 7 }]}>
       <View style={styles.side}>
-        {onBack ? (
-          <IconButton
-            icon={ArrowRight}
-            iconColor={color.ink}
-            accessibilityLabel={ar.common.back}
-            onPress={onBack}
-          />
-        ) : null}
+        {start ??
+          (onBack ? (
+            <IconButton
+              icon={ArrowRight}
+              iconColor={color.ink}
+              accessibilityLabel={ar.common.back}
+              onPress={onBack}
+            />
+          ) : null)}
       </View>
       <Txt variant="header" accessibilityRole="header">
         {title}

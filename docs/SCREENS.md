@@ -27,13 +27,13 @@ The links between `.dc.html` files are the navigation map. If an `<a href>` in a
 |---|---|---|---|
 | 06 | Tasks (home) | `/tasks` | Headline «قد ما **تعطي** للنادي **يعطيك**» with the committee subtitle. The bell opens 17. A stats card shows hours this term, pending and tasks done; tapping it opens 16. «مهامي» lists my tasks with state chips, and a returned task shows the leader's note inline. «متاحة للجنتك» lists available tasks with «انضم للمهمة». **P1** for reading |
 | 07 | Available task | `/tasks/[id]` | Detail in its not-joined state: chips (shared, committees, hours), title, creator, a 2×2 info grid (date, hours, time, place), description, and the joined count over capacity. The sticky CTA «انضم للمهمة» opens 08. **P1** |
-| 08 | Join confirm | sheet `/join/[id]` | Summary of the task and a note that you can leave from the task page. «تأكيد الانضمام» calls `POST /tasks/{id}/claim` and goes to 09. **P2** |
-| 09 | Joined | `/tasks/[id]` | A green success toast, then the working state of the detail screen. |
+| 08 | Join confirm | sheet (`JoinSheet`) | Summary of the task and a note that you can leave from the task page. «تأكيد الانضمام» calls `POST /tasks/{id}/claim` and goes to 09. **P2** |
+| 09 | Joined | `/tasks/[id]` | A green success toast, then the working state of the detail screen. An **event task** (has a time slot) shows the artboard's layout until the event is over: chips (shared, state, hours), a date line, a stepper انضممت → الفعالية → التسليم → الاعتماد, «المنضمّين  3 من 4» with «أنت، سلمان، ومحمد», and a locked «التسليم بعد الفعالية» next to «انسحاب». |
 | 10 | Working on it | `/tasks/[id]` | Chips plus «باقي 3 أيام». The info grid has a contact cell that opens a `tel:` link. A «مسار المهمة» stepper runs انضممت → التسليم → المراجعة → الاعتماد. «انسحاب» opens 14 and «سلّم المهمة» opens 11. **P1** for reading |
-| 11 | Submit | sheet `/submit/[id]` | «وش أنجزت؟» with a 500-character limit, «رابط العمل» (optional), attachments with an add/remove list, and «إرسال للاعتماد». Calls `POST /tasks/{id}/submit` (multipart) and goes to 12. **P2** |
+| 11 | Submit | sheet (`SubmitSheet`) | «وش أنجزت؟» with a 500-character limit, «رابط العمل» (optional), attachments with an add/remove list, and «إرسال للاعتماد». Calls `POST /tasks/{id}/submit` (multipart) and goes to 12. **P2** |
 | 12 | Submitted | `/tasks/[id]` | A banner showing who reviews it. The stepper is at step 3 in `submitted` amber. «تسليمك» shows the note, link and files. «تعديل التسليم» is allowed while the state is still `submitted`. |
 | 13 | Returned | `/tasks/[id]` | An orange card with the leader's `returnNote` and a «تسليمك السابق» history. The CTA «عدّل وأعد التسليم» opens 11 with the fields prefilled. |
-| 14 | Leave confirm | sheet `/leave/[id]` | Destructive confirm «نعم، انسحب» calls `POST /tasks/{id}/leave`. «لا، أكمل المهمة» closes the sheet. **P2** |
+| 14 | Leave confirm | sheet (`LeaveSheet`) | Destructive confirm «نعم، انسحب» calls `POST /tasks/{id}/leave`. «لا، أكمل المهمة» closes the sheet. **P2** |
 
 ## 3. Other task states
 | # | Screen | Route | Notes |

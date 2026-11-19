@@ -17,9 +17,19 @@ type Props = {
   hero?: boolean;
   /** Overlap style used in stacked avatars: 2pt border in the card colour. */
   stacked?: boolean;
+  /** Set false to drop the brand halo on my hero avatar (edit profile, 28). */
+  halo?: boolean;
 };
 
-export function Avatar({ gender, size = 36, photoUrl, ring = 'gender', hero, stacked }: Props) {
+export function Avatar({
+  gender,
+  size = 36,
+  photoUrl,
+  ring = 'gender',
+  hero,
+  stacked,
+  halo = true,
+}: Props) {
   const genderColor = avatarRing[gender];
   const ringColor = ring === 'me' ? (hero ? color.brand : color.highlight) : genderColor;
   const glyphColor = ring === 'me' ? (hero ? color.avatarGlyph : color.highlight) : genderColor;
@@ -42,7 +52,7 @@ export function Avatar({ gender, size = 36, photoUrl, ring = 'gender', hero, sta
     </View>
   );
 
-  if (hero && ring === 'me') {
+  if (hero && ring === 'me' && halo) {
     // 6pt brand halo around my own avatar
     return <View style={[styles.halo, { borderRadius: size / 2 + 6 }]}>{inner}</View>;
   }

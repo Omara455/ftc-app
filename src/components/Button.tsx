@@ -12,7 +12,15 @@ import { Txt } from '@/components/Txt';
 import { color, hue, radius, shadow, tint } from '@/theme/tokens';
 
 export type ButtonVariant =
-  'primary' | 'secondary' | 'destructive' | 'dangerSoft' | 'ghost' | 'link' | 'dangerLink';
+  | 'primary'
+  | 'secondary'
+  | 'destructive'
+  | 'dangerSoft'
+  | 'ghost'
+  | 'link'
+  | 'dangerLink'
+  /** Not available yet (09 «التسليم بعد الفعالية»): raised fill, lock, soft label. Always disabled. */
+  | 'waiting';
 
 type Props = {
   label: string;
@@ -74,6 +82,7 @@ const looks = {
     size: 14,
     weight: 'semibold',
   },
+  waiting: { bg: color.raised, fg: color.inkSoft, border: undefined, size: 15, weight: 'bold' },
 } as const;
 
 export function Button({
@@ -92,11 +101,12 @@ export function Button({
 }: Props) {
   const look = looks[variant];
   const inline = variant === 'link' || variant === 'dangerLink';
-  const isDisabled = disabled || locked;
+  const waiting = variant === 'waiting';
+  const isDisabled = disabled || locked || waiting;
   const busy = !!loading;
   const sm = size === 'sm';
   const fg = locked ? color.inkSoft : look.fg;
-  const LeadIcon = locked ? Lock : Icon;
+  const LeadIcon = locked || waiting ? Lock : Icon;
 
   return (
     <Pressable

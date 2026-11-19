@@ -49,10 +49,11 @@ app/
   (tabs)/leaderboard.tsx
   (tabs)/account/index.tsx  achievements.tsx  settings.tsx  edit-profile.tsx
   notifications.tsx
-  (sheets)/join/[id].tsx  leave/[id].tsx  submit/[id].tsx  change-password.tsx
-  (logout is a component sheet, src/features/auth/LogoutSheet.tsx, opened from Settings)
+  (sheets are components, not routes, presented from the screen underneath:
+   src/features/tasks/sheets/JoinSheet · LeaveSheet · SubmitSheet,
+   src/features/account/ChangePasswordSheet, src/features/auth/LogoutSheet)
 src/
-  api/        client.ts (fetch + token + 401 handling), endpoints, types.ts
+  api/        client.ts (fetch + token + 401 handling), endpoints, types.ts, mutations.ts (writes)
   components/ Card, Chip, StateChip, Avatar, LeagueBadge, TaskCard, Stepper, Sheet, Button, ListRow, Skeleton, OfflineBanner, TabBar
   theme/      tokens.ts
   i18n/       ar.ts

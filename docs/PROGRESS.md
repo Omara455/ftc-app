@@ -2,7 +2,7 @@
 
 **Read this first in a new session**, after `CLAUDE.md`. It records what's built, every decision the project owner has approved, what's still open, and what comes next. Keep it up to date at the end of every milestone.
 
-Last updated: 2026-11-18, after M4 was merged (PR #4).
+Last updated: 2026-11-19, M5 built on `m5-writes` (PR open, not merged).
 
 ---
 
@@ -15,7 +15,7 @@ Last updated: 2026-11-18, after M4 was merged (PR #4).
 | M2 Auth and shell | 01–05, 30 | #2 | ✅ merged |
 | M3 Tasks (read) | 06, 07, 10, 12, 13, 15, 16, 18, 19 | #3 | ✅ merged |
 | M4 Community, Leaderboard, Account | 20–27, **29** (pulled forward) | #4 | ✅ merged |
-| **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | — | **next** |
+| **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5 | **in review** |
 | M6 Notifications (Phase 2) | 05 (`POST /devices`), 17, 27 toggles | — | after M5 |
 
 Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against `/api/mobile/v1` on staging. The Phase 1 screens are all built. That release needs the portal team's API (see §4) and an on-device check.
@@ -23,17 +23,18 @@ Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against
 **Not yet verified on a device.** Every check so far is on Expo web at 390×844 plus `npm run smoke`. The owner said they'd do the EAS / Android steps in `docs/DEVICE.md` and report back; nothing has been reported yet. Biometric login, native RTL, sheets and gestures can only be checked there.
 
 ### What exists
-- **Stack:** Expo SDK 58 (RN 0.88, React 19.3), Expo Router with typed routes, TanStack Query (persisted to AsyncStorage), lucide-react-native, Cairo, @gorhom/bottom-sheet, react-native-reanimated 4. Every route's file is listed in `CLAUDE.md`'s layout; `edit-profile`, `notifications` and `(sheets)/*` don't exist yet.
+- **Stack:** Expo SDK 58 (RN 0.88, React 19.3), Expo Router with typed routes, TanStack Query (persisted to AsyncStorage), lucide-react-native, Cairo, @gorhom/bottom-sheet, react-native-reanimated 4. Every route's file is listed in `CLAUDE.md`'s layout; `notifications` doesn't exist yet. M5 added `expo-image-picker` and `expo-document-picker`.
 - **API layer:** `src/api/` holds the client (Bearer token, global logout on 401, Laravel 422 → field errors, 429/409/403/network kinds), the endpoints, the types, the query keys and the hooks.
 - **Mock mode:** an empty `EXPO_PUBLIC_API_BASE_URL` serves `src/api/mock.ts`, which uses the fixtures in `src/mocks/`.
   - Sign in with any email and the password `ftc-portal`. Any other password returns 422; 5 failures in a minute return 429.
   - An email starting with `offline` simulates a network error.
   - `EXPO_PUBLIC_MOCK_SCENARIO=empty|error|deadlines` switches scenarios, and `EXPO_PUBLIC_MOCK_DELAY` sets the response delay.
 - **Auth:** `src/auth/AuthProvider.tsx`. The token is in SecureStore (localStorage on web). The gate uses `Stack.Protected`, and the biometric check runs at boot.
+- **Writes (M5):** `src/api/mutations.ts` holds join / leave / submit / edit profile with optimistic updates and rollback. The mock keeps write state in memory until reload; a second claim returns 409.
 - **Flags:** `src/config/flags.ts`. `writes` and `notifications` are off by default; turn them on with `EXPO_PUBLIC_FLAG_WRITES=1` / `EXPO_PUBLIC_FLAG_NOTIFICATIONS=1`.
 - **Tooling:**
   - `npm run shot` (web screenshot vs artboard)
-  - `npm run smoke` (23-step Playwright E2E against mocks, also in CI)
+  - `npm run smoke` (30-step Playwright E2E against mocks, writes on, also in CI)
   - `scripts/generate-icons.mjs`
   - `/dev/kit`
   - CI runs lint, typecheck, prettier and smoke.
@@ -136,6 +137,10 @@ All of these are in `docs/API.md` and already returned by the mocks. The owner i
   - typed `Me.recentActivity` (`Activity`)
   - `achievementsUnlocked` / `achievementsTotal` on `GET /members/{id}`
   - `GET /members?q=` is used for search.
+- **M5:**
+  - `keepFiles[]` on submit (keep already-uploaded files when editing)
+  - event tasks: `canSubmit: false` until the event is over
+  - `POST /me` + `_method=PATCH` for the multipart profile update, returning `Me`
 
 When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BASE_URL`. Check the shapes against `src/api/types.ts`.
 
@@ -146,24 +151,43 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 - [ ] **Device check on Android**, by the owner (`docs/DEVICE.md`). Nothing reported yet.
 - [ ] **Committee names** for projects and finance: to be confirmed with the club.
 - [ ] **Android package name:** confirm `com.ftcksu.app` before release.
-- [ ] **Portal team:** review and implement the M3/M4 API proposals and the Phase 2 endpoints.
+- [ ] **Portal team:** review and implement the M3/M4/M5 API proposals and the Phase 2 endpoints.
+- [ ] **M5 review:** the choices and copy listed in §5.
 
 **Possible later features** (not planned, don't build without asking):
 - Offline submission queue: save a submission made offline and send it when the connection returns. Would need new screen-19 copy.
 
 ---
 
-## 5. Next: M5, writes (Phase 2)
+## 5. M5 in review, then M6
 
-From `docs/PLAN.md`: screens **08** join confirm, **09** joined (toast + working state), **11** submit, **14** leave confirm, **28** edit profile. Screen 29 is already done.
-- **Calls:** `POST /tasks/{id}/claim`, `/leave` and `/submit` (multipart: `note` ≤500, `link?`, `files[]?`); `PATCH /me` (`bio` ≤160, `photo?`, **only these two**).
-- **Data flow:** use optimistic updates, then invalidate `['tasks']` and `['me']`. A 409 on claim means the task is full or already joined.
-- **Offline:** disable every write offline with the locked `Button`. `LockedNotice` already exists. No offline queue (decided).
-- **Routes:** the sheets go in `app/(sheets)/join/[id].tsx`, `leave/[id].tsx` and `submit/[id].tsx` (CLAUDE.md layout). The existing sticky CTAs in `app/(tabs)/tasks/[id].tsx` (`Cta`) and the join button on `AvailableTaskCard` are already behind `flags.writes`; wire them to these sheets.
-- **Edit profile (28):** «حفظ» / «إلغاء» in the header, `expo-image-picker` (not installed yet; use `npx expo install`), bio limited to 160 characters. Name, university ID and committee are read-only, with the HR note.
-- **Steps:** read the artboards first (`JoinConfirm`, `TaskJoined`, `SubmitTask`, `LeaveConfirm`, `EditProfile`), add the mock routes, then extend smoke.
+**M5 (branch `m5-writes`, PR open)** built screens 08, 09, 11, 14 and 28 behind `flags.writes`. The choices below are **waiting for the owner's review**. Move them into §2 once approved.
+- **Sheets are components, not routes:** `src/features/tasks/sheets/{Join,Leave,Submit}Sheet.tsx`, like Logout and Change password. CLAUDE.md's layout is updated.
+- **09 for event tasks** (`timeFrom` set, event not over) follows its artboard:
+  - chips: shared, state, hours (no committee or deadline chip; the date line repeats the date)
+  - stepper: انضممت → الفعالية → التسليم → الاعتماد
+  - «المنضمّين  3 من 4» with «أنت، سلمان، ومحمد»
+  - a locked «التسليم بعد الفعالية» while `canSubmit` is false
+  - The description card stays below (not in the artboard).
+  - Non-event tasks get the toast on top of the normal 10 layout.
+- **The toast** shows until you leave the task screen (`src/lib/flash.ts`). Joining from a Tasks card opens the task with the toast.
+- **Submit (11):**
+  - «إرسال للاعتماد» stays disabled until the note has text.
+  - Files come from `expo-document-picker` (**new dependency**). On iOS that opens Files, not Photos.
+  - «تم الرفع» only shows on files already on the server (edit/resubmit). New files show their size only, because they upload with the submission.
+- **Edit profile (28):**
+  - «حفظ» goes back to Settings (the artboard links to Account).
+  - Unchanged → «حفظ» just goes back.
+  - Offline → «حفظ» is locked and the photo can't be changed.
+- **Leave (14)** goes back to Tasks, where the task is under «متاحة للجنتك» again straight away.
+- **Copy not in the design, needs sign-off:**
+  - «الملف أكبر من 10 م.ب، اختر ملف أصغر.»
+  - «ما بقى مكان في هالمهمة.» (409)
+  - «ما تقدر تسوي هذا على هالمهمة الحين.» (403)
+  - the iOS photos permission text in `app.json`
+- **Android back** closes any open sheet (added to `Sheet`).
 
-Then **M6**:
+**Next: M6**
 - Register the Expo push token (`POST /devices`).
 - Deep links from notifications, using the type → screen map in SCREENS.md.
 - Notifications list (17) with mark-as-read.
@@ -184,4 +208,7 @@ Then **M6**:
   - NetInfo on web only reacts to window `online`/`offline` through our listener in `src/lib/network.ts`.
 - **Design artboards:** `design/artboards/` is git-ignored. If it's missing, re-read `project/*.dc.html` from the design artifact (URL in CLAUDE.md) and copy the files in. The blob → asset map is in `scripts/shot.mjs`.
 - **Box-shadow vs layout:** artboards draw rings, halos and focus rings as CSS box-shadows, which take no layout space. Use negative margins (`Avatar` ring and halo) or negative absolute insets (`TextField` focus ring) so sizes match.
-- **Smoke tests:** `scripts/smoke.mjs`, 23 steps. The hours-privacy regex is `/\d+\s*ساع|\+\d/`, so achievement names like «خمسون ساعة» are allowed.
+- **gorhom sheets read `paddingBottom` from a plain style object.** Pass `BottomSheetView` `style` and `BottomSheetScrollView` `contentContainerStyle` as one object (no arrays, no `false` entries), and never pass `snapPoints={undefined}`. Otherwise the 34pt bottom padding disappears.
+- **`BottomSheetTextInput` crashes on web** (`currentlyFocusedInput`). `TextField inSheet` uses it on native only.
+- **`npm run shot`** runs `--fill` before `--click`, so it can't type into a sheet; smoke covers that. `--click` can be repeated (applied in order).
+- **Smoke tests:** `scripts/smoke.mjs`, 30 steps, built with `EXPO_PUBLIC_FLAG_WRITES=1`. Write steps after the first navigate inside the app: a reload resets the mock's write state. The hours-privacy regex is `/\d+\s*ساع|\+\d/`, so achievement names like «خمسون ساعة» are allowed.

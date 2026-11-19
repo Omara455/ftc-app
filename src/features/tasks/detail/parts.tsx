@@ -1,11 +1,18 @@
 // Building blocks of the task detail screen (07, 10, 12, 13). The screen picks which
 // blocks to show from `myState` and the `can*` flags (PLAN: one screen, not one per state).
-import { FileText, Hourglass, Link as LinkIcon, RotateCcw } from 'lucide-react-native';
+import {
+  Calendar,
+  Check,
+  FileText,
+  Hourglass,
+  Link as LinkIcon,
+  RotateCcw,
+} from 'lucide-react-native';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import type { FileRef, Task } from '@/api/types';
 import { Avatar } from '@/components/Avatar';
-import { CommitteeChip, DeadlineChip, SharedChip, StateChip } from '@/components/Chip';
+import { Chip, CommitteeChip, DeadlineChip, SharedChip, StateChip } from '@/components/Chip';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Skeleton } from '@/components/Skeleton';
 import type { Step } from '@/components/Stepper';
@@ -13,25 +20,45 @@ import { Ltr, Txt } from '@/components/Txt';
 import { deadlineInfo } from '@/features/tasks/deadline';
 import { ar } from '@/i18n/ar';
 import { isolateLatin } from '@/i18n/bidi';
-import { ago, dayAgo, dayMonth } from '@/i18n/dates';
-import { fileSize, firstName, hoursUnit, seatsLeftLabel } from '@/i18n/format';
+import { ago, dayAgo, dayMonth, timeRange, weekday, weekdayDayMonth } from '@/i18n/dates';
+import { fileSize, firstName, hoursLabel, hoursUnit, listAnd, seatsLeftLabel } from '@/i18n/format';
 import { color, hue, radius, taskState, tint } from '@/theme/tokens';
 
 const t = ar.task;
 
 // ── Chips · title · creator ─────────────────────────────────────────────────
 
-export function TaskHeading({ task, showCreator }: { task: Task; showCreator: boolean }) {
-  const deadline = deadlineInfo(task.deadline, task.myState);
+export function TaskHeading({
+  task,
+  showCreator,
+  event,
+}: {
+  task: Task;
+  showCreator: boolean;
+  /** 09: joined event — shared, state and hours chips; the date line below replaces the rest. */
+  event?: boolean;
+}) {
+  const deadline = event ? null : deadlineInfo(task.deadline, task.myState);
   return (
     <View style={styles.heading}>
       <View style={styles.chips}>
         {task.shared ? <SharedChip label={t.shared} /> : null}
-        {task.committees.map((c) => (
-          <CommitteeChip key={c.id} label={c.name} committeeKey={c.key} />
-        ))}
+        {event
+          ? null
+          : task.committees.map((c) => (
+              <CommitteeChip key={c.id} label={c.name} committeeKey={c.key} />
+            ))}
         {task.myState ? <StateChip state={task.myState} /> : null}
         {deadline ? <DeadlineChip label={deadline.label} overdue={deadline.overdue} /> : null}
+        {event ? (
+          <Chip
+            label={hoursLabel(task.hours)}
+            fg={color.highlight}
+            bg={tint(color.accent, 0.14)}
+            size={12.5}
+            bold
+          />
+        ) : null}
       </View>
       <Txt size={23} leading={1.45} weight="extrabold" accessibilityRole="header">
         {task.title}
@@ -218,8 +245,7 @@ export function DescriptionCard({ text }: { text: string }) {
 
 export function JoinedSection({ task }: { task: Task }) {
   const names = task.people.slice(0, 3).map((p) => firstName(p.name));
-  const namesText =
-    names.length > 1 ? `${names.slice(0, -1).join('، ')} و${names.at(-1)}` : names[0];
+  const namesText = listAnd(names);
   const seatsLeft = task.capacity != null ? Math.max(0, task.capacity - task.joinedCount) : null;
   return (
     <View style={[styles.card, styles.gap10]}>
@@ -253,6 +279,77 @@ export function JoinedSection({ task }: { task: Task }) {
     </View>
   );
 }
+
+// ── 09: «المنضمّين  3 من 4» after joining an event («أنت، سلمان، ومحمد») ─────
+
+export function JoinedWithMeSection({ task }: { task: Task }) {
+  const people = [...task.people].sort((a, b) => Number(b.me) - Number(a.me));
+  const names = people.map((p) => (p.me ? t.you : firstName(p.name)));
+  return (
+    <View style={[styles.card, styles.gap10]}>
+      <View style={styles.between}>
+        <Txt size={15} weight="bold" accessibilityRole="header">
+          {t.people}
+        </Txt>
+        {task.capacity ? (
+          <Txt size={13} weight="semibold" color={color.inkSoft}>
+            {ar.account.ofTotal(task.joinedCount, task.capacity)}
+          </Txt>
+        ) : null}
+      </View>
+      {task.capacity ? <ProgressBar value={task.joinedCount / task.capacity} /> : null}
+      <Txt size={13} weight="regular" color={color.inkSecondary}>
+        {names.length <= 3
+          ? listAnd(names)
+          : ar.common.joinedOf(task.joinedCount, task.capacity ?? task.joinedCount)}
+      </Txt>
+    </View>
+  );
+}
+
+// ── 09: green «انضممت للمهمة، بالتوفيق!» toast ──────────────────────────────
+
+export function JoinedToast() {
+  return (
+    <View accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.toast}>
+      <View style={styles.toastIcon}>
+        <Check size={15} color={color.bg} strokeWidth={3} />
+      </View>
+      <View style={styles.flex}>
+        <Txt size={14} weight="bold" color={hue.green.s200}>
+          {t.joinedToast}
+        </Txt>
+        <Txt size={12.5} weight="regular" color={hue.green.s300}>
+          {t.joinedToastSub}
+        </Txt>
+      </View>
+    </View>
+  );
+}
+
+// ── 09: «الأربعاء 19 نوفمبر · 7 إلى 9 م · مسرح الكلية» ──────────────────────
+
+export function EventLine({ task }: { task: Task }) {
+  const parts = [
+    weekdayDayMonth(task.deadline),
+    timeRange(task.timeFrom, task.timeTo),
+    task.location,
+  ].filter(Boolean);
+  return (
+    <View style={styles.inline}>
+      <Calendar size={15} color={color.inkSoft} strokeWidth={1.8} />
+      <Txt size={13.5} weight="regular" color={color.inkSecondary} style={styles.flexShrink}>
+        {parts.join(' · ')}
+      </Txt>
+    </View>
+  );
+}
+
+/** An event task has a time slot; its deadline is the event date. */
+export const isEventTask = (task: Task) => task.timeFrom != null;
+/** The event is over (its deadline is the event's end), so the work can be submitted. */
+export const eventOver = (task: Task, now = new Date()) =>
+  now.getTime() >= new Date(task.deadline).getTime();
 
 // ── 10: «المنضمّين · 2» list (states, never hours) ──────────────────────────
 
@@ -298,7 +395,12 @@ export function buildSteps(task: Task): { steps: Step[]; currentTone: string } |
   const sub = task.mySubmission;
   const joined: Step = {
     label: t.stepJoined,
-    sub: task.myJoinedAt ? dayMonth(task.myJoinedAt) : '',
+    // «الحين» right after joining (09), the date after that (10)
+    sub: task.myJoinedAt
+      ? Date.now() - new Date(task.myJoinedAt).getTime() < 60 * 60_000
+        ? t.now
+        : dayMonth(task.myJoinedAt)
+      : '',
     status: 'done',
   };
   const approve = (status: Step['status'], when?: string): Step => ({
@@ -308,6 +410,27 @@ export function buildSteps(task: Task): { steps: Step[]; currentTone: string } |
   });
   switch (task.myState) {
     case 'working':
+      // 09: an event task waits for the event before it can be submitted
+      if (isEventTask(task)) {
+        const over = eventOver(task);
+        return {
+          currentTone: color.highlight,
+          steps: [
+            joined,
+            {
+              label: t.stepEvent,
+              sub: over ? dayMonth(task.deadline) : weekday(task.deadline),
+              status: over ? 'done' : 'current',
+            },
+            {
+              label: t.stepSubmit,
+              sub: over ? t.yourTurn : t.afterIt,
+              status: over ? 'current' : 'future',
+            },
+            approve('future'),
+          ],
+        };
+      }
       return {
         currentTone: color.highlight,
         steps: [
@@ -405,6 +528,25 @@ const styles = StyleSheet.create({
   gap10: { gap: 10 },
   gap16: { gap: 16 },
   heading: { gap: 8 },
+  toast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    backgroundColor: tint(hue.green.base, 0.1),
+    borderWidth: 1,
+    borderColor: tint(hue.green.base, 0.35),
+  },
+  toastIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: hue.green.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   creator: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   card: {

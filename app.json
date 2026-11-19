@@ -50,6 +50,14 @@
           "supportsRTL": true,
           "forcesRTL": true
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "نستخدم صورك لتغيير صورة ملفك أو إرفاقها في تسليم المهام.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {
