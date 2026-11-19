@@ -2,7 +2,7 @@
 
 **Read this first in a new session**, after `CLAUDE.md`. It records what's built, every decision the project owner has approved, what's still open, and what comes next. Keep it up to date at the end of every milestone.
 
-Last updated: 2026-11-19, M6 built on `m6-notifications` (PR open, not merged).
+Last updated: 2026-11-19, M7 built on `m7-release-readiness` (PR #8 open, not merged).
 
 ---
 
@@ -16,7 +16,8 @@ Last updated: 2026-11-19, M6 built on `m6-notifications` (PR open, not merged).
 | M3 Tasks (read) | 06, 07, 10, 12, 13, 15, 16, 18, 19 | #3 | ✅ merged |
 | M4 Community, Leaderboard, Account | 20–27, **29** (pulled forward) | #4 | ✅ merged |
 | **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5, #6 | ✅ merged |
-| **M6 Notifications (Phase 2)** | 05 (`POST /devices`), 17, 27 toggles | #7 | **in review** |
+| M6 Notifications (Phase 2) | 05 (`POST /devices`), 17, 27 toggles | #7 | ✅ merged |
+| **M7 Release readiness** | a11y, Sentry, EAS, `docs/RELEASE.md`, 27 blocked-permission row | #8 | **in review** |
 
 Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against `/api/mobile/v1` on staging. The Phase 1 screens are all built. That release needs the portal team's API (see §4) and an on-device check.
 
@@ -35,7 +36,7 @@ Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against
 - **Flags:** `src/config/flags.ts`. `writes` and `notifications` are off by default; turn them on with `EXPO_PUBLIC_FLAG_WRITES=1` / `EXPO_PUBLIC_FLAG_NOTIFICATIONS=1`.
 - **Tooling:**
   - `npm run shot` (web screenshot vs artboard)
-  - `npm run smoke` (34-step Playwright E2E against mocks, writes and notifications on, also in CI)
+  - `npm run smoke` (35-step Playwright E2E against mocks, writes and notifications on, includes the a11y label audit, also in CI)
   - `scripts/generate-icons.mjs`
   - `/dev/kit`
   - CI runs lint, typecheck, prettier and smoke.
@@ -136,6 +137,21 @@ Match the person referred to. Examples already built: «أنشأها / أنشأ�
   - 403: «ما تقدر تسوي هذا على هالمهمة الحين.»
   - iOS photos permission (`app.json`): «نحتاج نوصل لصورك عشان تغيّر صورتك أو ترفق صور مع تسليمك.»
 
+### M6 notifications (approved in review of PR #7)
+- **Grouping:** «اليوم», «هالأسبوع» (up to 6 days back), then «أقدم» for anything older.
+- **Time on a row:** relative («قبل ساعة», «أمس», «قبل 4 أيام»), except **today's deadline reminder, which shows its clock time** («9:00 ص») as in the artboard.
+- **Tapping a row** marks it read (not while offline) and opens its screen. Back returns to 17.
+- **«تحديد الكل كمقروء»** only shows while something is unread and you're online.
+- **The bell** on Tasks gets the glow dot while anything loaded is unread, and its label says «الإشعارات، غير مقروء».
+- **Settings toggles** save immediately (optimistic, rolled back on error) and are disabled offline. The section only shows once the settings have loaded.
+- **Push:**
+  - Shown as a banner even while the app is open.
+  - Asked for on screen 05. If notifications are blocked in the OS (or never allowed), Settings shows «الإشعارات مقفلة من إعدادات الجوال» with «افتح الإعدادات» and the toggles stay disabled (built in M7).
+  - Registered again on each start if the token changed.
+  - Unregistered on logout, before the session is revoked.
+- **Copy (approved):** «أقدم»; empty state «ما فيه إشعارات الحين» / «أول ما يصير شي يخصّك، بتلقاه هنا.».
+- `Toggle` now sets `aria-checked`, so web screen readers (and smoke) can see its state.
+
 ### Layout
 - `notifications-permission.tsx` lives at the `app/` root, on the signed-in side of the gate.
 - Logout is a component sheet (`src/features/auth/LogoutSheet.tsx`).
@@ -184,17 +200,46 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 - [ ] **Android package name:** confirm `com.ftcksu.app` before release.
 - [ ] **Portal team:** review and implement the M3–M6 API proposals and the Phase 2 endpoints.
 - [ ] **Push setup:** `eas init` (projectId) and Firebase/FCM credentials, per `docs/DEVICE.md` → «Push notifications». Without them the app can't get a push token.
-- [ ] **M6 review:** the choices and copy listed in §5.
+- [ ] **M7 review:** the choices in §5, the Arabic store text (RELEASE.md §4) and the privacy policy draft (RELEASE.md §6).
+- [ ] **Club accounts and URLs:** Google Play and Apple developer accounts, Sentry project (DSN), a staging API URL for `preview`, the privacy policy URL, the club contact email, and an App Review demo account (RELEASE.md §2, §4).
+- [ ] **iOS bundle id:** confirm `com.ftcksu.app` along with the Android package.
 
 **Possible later features** (not planned, don't build without asking):
 - Offline submission queue: save a submission made offline and send it when the connection returns. Would need new screen-19 copy.
 
 ---
 
-## 5. M6 in review
+## 5. M7 in review
 
-**M6 (branch `m6-notifications`, PR #7)** built screen 17, push registration and deep links, and the server-synced toggles on 27, behind `flags.notifications`. The choices below are **waiting for the owner's review**. Move them into §2 once approved.
-- **Grouping:** «اليوم», «هالأسبوع» (up to 6 days back), then **«أقدم»** for anything older (not in the design).
+**M7 (branch `m7-release-readiness`, PR #8)** prepares the release. The choices below are **waiting for the owner's review**. Move them into §2 once approved.
+- **Blocked notifications (27):**
+  - «الإشعارات مقفلة من إعدادات الجوال» row with «افتح الإعدادات». Toggles are disabled until permission is granted.
+  - If the OS can still ask (the member chose «لاحقًا» on 05), the row asks first; otherwise it opens the phone's settings.
+  - The permission is re-checked when the app returns to the foreground, and registers for push once granted.
+  - Web screenshots: `EXPO_PUBLIC_MOCK_SCENARIO=push-blocked`.
+- **Accessibility:**
+  - Audit: every control on 16 screens already had a label. It's now a smoke step, so a new unlabelled icon button fails CI.
+  - Text scales with the phone setting up to **1.3×** (`MAX_FONT_SCALE`, overridable per `Txt`); fixed-height controls stay intact.
+  - Checked on web with `EXPO_PUBLIC_FONT_SCALE=1.3`: Tasks, task detail, Leaderboard, Community and the tab bar hold up. Long names truncate on the podium as before.
+- **Sentry:**
+  - `src/lib/sentry.ts`; on only with a DSN, the real API and native.
+  - Sends no user, request body, headers or query strings, and no console breadcrumbs below warning.
+  - Crashes only (`tracesSampleRate: 0`) to stay in the free tier.
+- **EAS:**
+  - `preview` runs on the **mocks with writes and notifications on** until a staging URL exists. `production` points at `https://ftcksu.com/api/mobile/v1` with Phase 2 flags off.
+  - Channels: development / preview / production. `runtimeVersion` follows `version`. Android production builds are AAB, submitted to the internal track as a draft.
+- **iOS:** `bundleIdentifier: com.ftcksu.app` (same caveat as Android) and `ITSAppUsesNonExemptEncryption: false`.
+- **New dependencies:** `@sentry/react-native`, `expo-updates`.
+- **`docs/RELEASE.md`:**
+  - builds/channels/versions, one-time setup, release checklist
+  - Arabic store text (draft)
+  - screenshot list
+  - Arabic privacy policy draft, plus Play Data safety and App Store privacy answers
+  - real-API switch checklist per endpoint
+
+**Next:** PLAN.md has nothing after M7. The Phase 1 release waits on the portal API (§8 of RELEASE.md), the club accounts (§2 of RELEASE.md) and the device check.
+
+ **«أقدم»** for anything older (not in the design).
 - **Time on a row:** relative («قبل ساعة», «أمس», «قبل 4 أيام»), except **today's deadline reminder, which shows its clock time** («9:00 ص») as in the artboard.
 - **Tapping a row** marks it read (not while offline) and opens its screen. Back returns to 17.
 - **«تحديد الكل كمقروء»** only shows while something is unread and you're online.
@@ -232,4 +277,4 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 - **gorhom sheets read `paddingBottom` from a plain style object.** Pass `BottomSheetView` `style` and `BottomSheetScrollView` `contentContainerStyle` as one object (no arrays, no `false` entries), and never pass `snapPoints={undefined}`. Otherwise the 34pt bottom padding disappears.
 - **`BottomSheetTextInput` crashes on web** (`currentlyFocusedInput`). `TextField inSheet` uses it on native only.
 - **`npm run shot`** runs `--fill` before `--click`, so it can't type into a sheet; smoke covers that. `--click` can be repeated (applied in order).
-- **Smoke tests:** `scripts/smoke.mjs`, 34 steps, built with `EXPO_PUBLIC_FLAG_WRITES=1` and `EXPO_PUBLIC_FLAG_NOTIFICATIONS=1` (so first login goes through screen 05). Write steps after the first navigate inside the app: a reload resets the mock's write state. The hours-privacy regex is `/\d+\s*ساع|\+\d/`, so achievement names like «خمسون ساعة» are allowed.
+- **Smoke tests:** `scripts/smoke.mjs`, 35 steps, built with `EXPO_PUBLIC_FLAG_WRITES=1` and `EXPO_PUBLIC_FLAG_NOTIFICATIONS=1` (so first login goes through screen 05). Write steps after the first navigate inside the app: a reload resets the mock's write state. The hours-privacy regex is `/\d+\s*ساع|\+\d/`, so achievement names like «خمسون ساعة» are allowed.

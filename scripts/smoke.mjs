@@ -365,6 +365,41 @@ await step('notification toggles are saved on the server', async () => {
   if ((await toggle.getAttribute('aria-checked')) !== 'true') throw new Error('toggle not saved');
 });
 
+// ── M7: accessibility ────────────────────────────────────────────────────────
+await step('every button, link, switch and tab has a screen-reader label', async () => {
+  const routes = [
+    '/tasks',
+    '/tasks/101',
+    '/tasks/102',
+    '/tasks/103',
+    '/tasks/301',
+    '/tasks/history',
+    '/community',
+    '/community/search',
+    '/community/committee/1',
+    '/community/member/102',
+    '/leaderboard',
+    '/account',
+    '/account/achievements',
+    '/account/settings',
+    '/account/edit-profile',
+    '/notifications',
+  ];
+  const problems = [];
+  for (const route of routes) {
+    await page.goto(base + route);
+    await page.waitForTimeout(1500);
+    const unnamed = await page.evaluate(() =>
+      [...document.querySelectorAll('[role=button],[role=link],[role=switch],[role=tab],a,button')]
+        .filter((e) => e.getClientRects().length)
+        .filter((e) => !(e.getAttribute('aria-label') || e.innerText || '').trim())
+        .map((e) => e.outerHTML.slice(0, 80)),
+    );
+    if (unnamed.length) problems.push(`${route}: ${unnamed.join(' | ')}`);
+  }
+  if (problems.length) throw new Error(problems.join('\n    '));
+});
+
 await step('tab bar switches tabs', async () => {
   await page.goto(base + '/tasks');
   await tap('الصدارة');

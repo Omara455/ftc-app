@@ -6,7 +6,7 @@
 //   logout (sheet 30)
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { ExternalLink, Fingerprint, KeyRound, LogOut, Pencil } from 'lucide-react-native';
+import { BellOff, ExternalLink, Fingerprint, KeyRound, LogOut, Pencil } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -31,8 +31,9 @@ import {
   setBiometricEnabled,
 } from '@/lib/biometric';
 import { useScreenInsets } from '@/lib/insets';
+import { unblockPush, usePushPermission } from '@/lib/push';
 import { useIsOffline } from '@/lib/network';
-import { color, space } from '@/theme/tokens';
+import { color, hue, space } from '@/theme/tokens';
 
 const t = ar.settings;
 
@@ -46,6 +47,7 @@ export default function Settings() {
   const notify = useNotificationSettings().data;
   const updateNotify = useUpdateNotificationSettings();
   const offline = useIsOffline();
+  const permission = usePushPermission();
 
   useEffect(() => {
     void (async () => {
@@ -99,6 +101,20 @@ export default function Settings() {
 
         {flags.notifications && notify ? (
           <ListGroup label={t.notifications}>
+            {permission === 'blocked' ? (
+              <ListRow
+                icon={BellOff}
+                iconColor={hue.amber.base}
+                title={t.notificationsBlocked}
+                onPress={() => void unblockPush()}
+                accessibilityLabel={`${t.notificationsBlocked}، ${t.openPhoneSettings}`}
+                trailing={
+                  <Txt size={13} weight="semibold" color={color.accent}>
+                    {t.openPhoneSettings}
+                  </Txt>
+                }
+              />
+            ) : null}
             {(
               [
                 ['newTasks', t.notifyNewTasks],
@@ -114,7 +130,8 @@ export default function Settings() {
                   <Toggle
                     value={notify[key]}
                     onValueChange={(v) => updateNotify.mutate({ [key]: v })}
-                    disabled={offline}
+                    // Off in the OS → nothing would arrive; unlock once permission is granted.
+                    disabled={offline || permission === 'blocked'}
                     accessibilityLabel={label}
                   />
                 }

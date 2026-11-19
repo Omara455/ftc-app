@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
-import { Ltr, Txt } from '@/components/Txt';
+import { Ltr, MAX_FONT_SCALE, Txt } from '@/components/Txt';
 import { color, font, radius, tint } from '@/theme/tokens';
 
 type Props = Omit<TextInputProps, 'style'> & {
@@ -83,6 +83,7 @@ export function TextField({
           ) : null}
           <Input
             ref={ref as never}
+            maxFontSizeMultiplier={MAX_FONT_SCALE}
             {...input}
             secureTextEntry={secureTextEntry}
             accessibilityLabel={input.accessibilityLabel ?? label}

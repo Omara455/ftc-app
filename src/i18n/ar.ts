@@ -139,6 +139,9 @@ export const ar = {
     notifyReview: 'اعتماد التسليم أو إرجاعه',
     notifyDeadline: 'تذكير قبل موعد المهمة',
     notifyLeague: 'تحديثات الصدارة والمستوى',
+    // Approved in review of PR #7: OS permission off
+    notificationsBlocked: 'الإشعارات مقفلة من إعدادات الجوال',
+    openPhoneSettings: 'افتح الإعدادات',
     about: 'عن التطبيق',
     openPortal: 'فتح البوابة على الويب',
     version: 'الإصدار',

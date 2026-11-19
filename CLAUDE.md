@@ -12,6 +12,7 @@ Read these before writing code:
 | `docs/SCREENS.md` | Every screen: route, purpose, data, actions, where it links to. |
 | `docs/API.md` | The `/api/mobile/v1` contract and response shapes. The backend lives in the **portal repo**, not here. |
 | `docs/PLAN.md` | Build order and milestones. Follow it. |
+| `docs/RELEASE.md` | Builds, channels, versions, OTA updates, Sentry, store text, privacy policy, release checklist, and the real-API switch checklist. |
 | `src/theme/tokens.ts` | Design tokens as code. Copy into the app and never hard-code colours elsewhere. |
 | `assets/` | Background SVGs and the FTC logo/mark. |
 

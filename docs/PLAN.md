@@ -39,6 +39,18 @@ Work through these milestones in order. Each one ends with a running app and a s
 - Ask for permission, register the Expo push token with `POST /devices`, and handle deep links from a tapped notification to the right screen.
 - Notifications list with mark-as-read. Settings toggles synced to the server.
 
+## M7: Release readiness (2 days)
+- **Accessibility pass:** every icon-only button has a TalkBack/VoiceOver label. Check that larger system font sizes don't break layouts.
+- **Crash reporting:** Sentry (free tier), off in mock mode, no personal data.
+- **EAS:** preview and production build profiles, app versioning, and EAS Update channels for over-the-air fixes.
+- **Store prep (`docs/RELEASE.md`):**
+  - Google Play and App Store listing text in Arabic
+  - the screenshots needed
+  - a privacy policy draft (portal account, tasks, push token)
+  - the release checklist
+- **Switching to the real API:** a checklist of what to verify against each endpoint once the portal routes exist.
+- Also from the M6 review: when notifications are blocked in the OS, Settings shows «الإشعارات مقفلة من إعدادات الجوال» with «افتح الإعدادات», and the toggles stay disabled.
+
 ## Definition of done (every screen)
 - [ ] Matches its artboard at 390×844 (spacing, colour, copy, icons)
 - [ ] RTL is correct, and `+N` and Latin text are isolated

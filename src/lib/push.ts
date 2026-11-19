@@ -6,7 +6,8 @@
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import type { Href } from 'expo-router';
-import { Platform } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AppState, Linking, Platform } from 'react-native';
 
 import { devicesApi } from '@/api/endpoints';
 import type { NotificationType, PushData } from '@/api/types';
@@ -65,6 +66,50 @@ export async function registerForPush(): Promise<void> {
     // No network, emulator without Google services, etc. Next start tries again.
     console.warn('push: registration failed', e);
   }
+}
+
+export type PushPermission = 'granted' | 'blocked' | 'unsupported';
+
+/** Web screenshots only: `EXPO_PUBLIC_MOCK_SCENARIO=push-blocked` shows the blocked row. */
+const WEB_BLOCKED_SCENARIO =
+  Platform.OS === 'web' && process.env.EXPO_PUBLIC_MOCK_SCENARIO === 'push-blocked';
+
+/**
+ * OS notification permission for Settings (27), re-read whenever the app comes back to
+ * the foreground (e.g. from the phone's settings). Not yet asked counts as blocked.
+ */
+export function usePushPermission(): PushPermission {
+  const [state, setState] = useState<PushPermission>(
+    pushSupported || WEB_BLOCKED_SCENARIO ? 'blocked' : 'unsupported',
+  );
+  useEffect(() => {
+    if (!pushSupported) return;
+    const check = async () => {
+      const { granted } = await Notifications.getPermissionsAsync();
+      setState(granted ? 'granted' : 'blocked');
+      if (granted) void registerForPush(); // just enabled in the phone's settings
+    };
+    void check();
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && void check());
+    return () => sub.remove();
+  }, []);
+  return state;
+}
+
+/**
+ * «افتح الإعدادات»: if the OS can still ask (never asked, e.g. «لاحقًا» on screen 05),
+ * ask; otherwise open the app's page in the phone's settings.
+ */
+export async function unblockPush(): Promise<void> {
+  if (!pushSupported) return;
+  const current = await Notifications.getPermissionsAsync();
+  if (!current.granted && current.canAskAgain) {
+    // The OS dialog just answered; respect it either way.
+    const asked = await Notifications.requestPermissionsAsync();
+    if (asked.granted) await registerForPush();
+    return;
+  }
+  await Linking.openSettings();
 }
 
 /** Logout: stop pushes to this device (best effort, before the token is revoked). */
