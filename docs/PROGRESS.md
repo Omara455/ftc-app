@@ -2,7 +2,7 @@
 
 **Read this first in a new session**, after `CLAUDE.md`. It records what's built, every decision the project owner has approved, what's still open, and what comes next. Keep it up to date at the end of every milestone.
 
-Last updated: 2026-11-19, M7 built on `m7-release-readiness` (PR #8 open, not merged).
+Last updated: 2026-11-19. **Development paused** after M7 (PR #8 merged) until the device check and the portal API (see §5).
 
 ---
 
@@ -17,7 +17,8 @@ Last updated: 2026-11-19, M7 built on `m7-release-readiness` (PR #8 open, not me
 | M4 Community, Leaderboard, Account | 20–27, **29** (pulled forward) | #4 | ✅ merged |
 | **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5, #6 | ✅ merged |
 | M6 Notifications (Phase 2) | 05 (`POST /devices`), 17, 27 toggles | #7 | ✅ merged |
-| **M7 Release readiness** | a11y, Sentry, EAS, `docs/RELEASE.md`, 27 blocked-permission row | #8 | **in review** |
+| M7 Release readiness | a11y, Sentry, EAS, `docs/RELEASE.md`, 27 blocked-permission row | #8 | ✅ merged |
+| ⏸ **Paused** | until the device check and the portal API (§5) | — | — |
 
 Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against `/api/mobile/v1` on staging. The Phase 1 screens are all built. That release needs the portal team's API (see §4) and an on-device check.
 
@@ -152,6 +153,32 @@ Match the person referred to. Examples already built: «أنشأها / أنشأ�
 - **Copy (approved):** «أقدم»; empty state «ما فيه إشعارات الحين» / «أول ما يصير شي يخصّك، بتلقاه هنا.».
 - `Toggle` now sets `aria-checked`, so web screen readers (and smoke) can see its state.
 
+### M7 release readiness (approved in review of PR #8)
+- **Blocked notifications (27):**
+  - «الإشعارات مقفلة من إعدادات الجوال» row with «افتح الإعدادات». Toggles are disabled until permission is granted.
+  - If the OS can still ask (the member chose «لاحقًا» on 05), the row asks first; otherwise it opens the phone's settings.
+  - The permission is re-checked when the app returns to the foreground, and registers for push once granted.
+  - Web screenshots: `EXPO_PUBLIC_MOCK_SCENARIO=push-blocked`.
+- **Accessibility:**
+  - Audit: every control on 16 screens already had a label. It's now a smoke step, so a new unlabelled icon button fails CI.
+  - Text scales with the phone setting up to **1.3×** (approved) (`MAX_FONT_SCALE`, overridable per `Txt`); fixed-height controls stay intact.
+  - Checked on web with `EXPO_PUBLIC_FONT_SCALE=1.3`: Tasks, task detail, Leaderboard, Community and the tab bar hold up. Long names truncate on the podium as before.
+- **Sentry:**
+  - `src/lib/sentry.ts`; on only with a DSN, the real API and native.
+  - Sends no user, request body, headers or query strings, and no console breadcrumbs below warning.
+  - Crashes only (`tracesSampleRate: 0`) to stay in the free tier.
+- **EAS:**
+  - `preview` runs on the **mocks with writes and notifications on** until a staging URL exists (approved). `production` points at `https://ftcksu.com/api/mobile/v1` with Phase 2 flags off.
+  - Channels: development / preview / production. `runtimeVersion` follows `version`. Android production builds are AAB, submitted to the internal track as a draft.
+- **iOS:** `bundleIdentifier: com.ftcksu.app` (same caveat as Android) and `ITSAppUsesNonExemptEncryption: false`.
+- **New dependencies:** `@sentry/react-native`, `expo-updates`.
+- **`docs/RELEASE.md`:**
+  - builds/channels/versions, one-time setup, release checklist
+  - Arabic store text (draft)
+  - screenshot list
+  - Arabic privacy policy draft, plus Play Data safety and App Store privacy answers
+  - real-API switch checklist per endpoint
+
 ### Layout
 - `notifications-permission.tsx` lives at the `app/` root, on the signed-in side of the gate.
 - Logout is a component sheet (`src/features/auth/LogoutSheet.tsx`).
@@ -195,69 +222,32 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 
 ## 4. Open items
 
-- [ ] **Device check on Android**, by the owner (`docs/DEVICE.md`). Nothing reported yet.
+- [ ] ⏸ **Blocks resuming — device check on Android**, by the owner (`docs/DEVICE.md`, including «Push notifications»). Nothing reported yet.
 - [ ] **Committee names** for projects and finance: to be confirmed with the club.
-- [ ] **Android package name:** confirm `com.ftcksu.app` before release.
-- [ ] **Portal team:** review and implement the M3–M6 API proposals and the Phase 2 endpoints.
+- [ ] **App ids** (owner, with the club): confirm `com.ftcksu.app` for both the Android package and the iOS bundle id before the first release. They can't change afterwards.
+- [ ] ⏸ **Blocks resuming — portal API:** the portal team reviews and implements the M3–M6 API proposals and the `/api/mobile/v1` endpoints (Phase 1 first), on a staging server.
 - [ ] **Push setup:** `eas init` (projectId) and Firebase/FCM credentials, per `docs/DEVICE.md` → «Push notifications». Without them the app can't get a push token.
-- [ ] **M7 review:** the choices in §5, the Arabic store text (RELEASE.md §4) and the privacy policy draft (RELEASE.md §6).
+- [ ] **Store text and privacy policy** (owner, with the club): finish the Arabic store text (RELEASE.md §4) and the privacy policy draft (§6). **The policy must be reviewed by the club or the university against Saudi Arabia's Personal Data Protection Law (PDPL) before publishing.**
 - [ ] **Club accounts and URLs:** Google Play and Apple developer accounts, Sentry project (DSN), a staging API URL for `preview`, the privacy policy URL, the club contact email, and an App Review demo account (RELEASE.md §2, §4).
-- [ ] **iOS bundle id:** confirm `com.ftcksu.app` along with the Android package.
 
 **Possible later features** (not planned, don't build without asking):
 - Offline submission queue: save a submission made offline and send it when the connection returns. Would need new screen-19 copy.
 
 ---
 
-## 5. M7 in review
+## 5. ⏸ Paused (since 2026-11-19)
 
-**M7 (branch `m7-release-readiness`, PR #8)** prepares the release. The choices below are **waiting for the owner's review**. Move them into §2 once approved.
-- **Blocked notifications (27):**
-  - «الإشعارات مقفلة من إعدادات الجوال» row with «افتح الإعدادات». Toggles are disabled until permission is granted.
-  - If the OS can still ask (the member chose «لاحقًا» on 05), the row asks first; otherwise it opens the phone's settings.
-  - The permission is re-checked when the app returns to the foreground, and registers for push once granted.
-  - Web screenshots: `EXPO_PUBLIC_MOCK_SCENARIO=push-blocked`.
-- **Accessibility:**
-  - Audit: every control on 16 screens already had a label. It's now a smoke step, so a new unlabelled icon button fails CI.
-  - Text scales with the phone setting up to **1.3×** (`MAX_FONT_SCALE`, overridable per `Txt`); fixed-height controls stay intact.
-  - Checked on web with `EXPO_PUBLIC_FONT_SCALE=1.3`: Tasks, task detail, Leaderboard, Community and the tab bar hold up. Long names truncate on the podium as before.
-- **Sentry:**
-  - `src/lib/sentry.ts`; on only with a DSN, the real API and native.
-  - Sends no user, request body, headers or query strings, and no console breadcrumbs below warning.
-  - Crashes only (`tracesSampleRate: 0`) to stay in the free tier.
-- **EAS:**
-  - `preview` runs on the **mocks with writes and notifications on** until a staging URL exists. `production` points at `https://ftcksu.com/api/mobile/v1` with Phase 2 flags off.
-  - Channels: development / preview / production. `runtimeVersion` follows `version`. Android production builds are AAB, submitted to the internal track as a draft.
-- **iOS:** `bundleIdentifier: com.ftcksu.app` (same caveat as Android) and `ITSAppUsesNonExemptEncryption: false`.
-- **New dependencies:** `@sentry/react-native`, `expo-updates`.
-- **`docs/RELEASE.md`:**
-  - builds/channels/versions, one-time setup, release checklist
-  - Arabic store text (draft)
-  - screenshot list
-  - Arabic privacy policy draft, plus Play Data safety and App Store privacy answers
-  - real-API switch checklist per endpoint
+**Development is paused** after M7, by the owner's decision. All milestones M0–M7 are merged into `main`. There's no open branch and nothing is half-built.
 
-**Next:** PLAN.md has nothing after M7. The Phase 1 release waits on the portal API (§8 of RELEASE.md), the club accounts (§2 of RELEASE.md) and the device check.
+**Resume when both of these happen:**
+1. **Device check** (owner): the Android development build per `docs/DEVICE.md`, including the push section, with findings reported back. Expect native-only fixes: RTL, fonts, sheets, gestures, keyboard over the submit sheet, pickers, biometric login, push.
+2. **Portal API** (portal team): the `/api/mobile/v1` routes exist on a staging server. Then work through `docs/RELEASE.md` §8 endpoint by endpoint, point `preview` at staging, and note every shape difference.
 
- **«أقدم»** for anything older (not in the design).
-- **Time on a row:** relative («قبل ساعة», «أمس», «قبل 4 أيام»), except **today's deadline reminder, which shows its clock time** («9:00 ص») as in the artboard.
-- **Tapping a row** marks it read (not while offline) and opens its screen. Back returns to 17.
-- **«تحديد الكل كمقروء»** only shows while something is unread and you're online.
-- **The bell** on Tasks gets the glow dot while anything loaded is unread, and its label says «الإشعارات، غير مقروء».
-- **Settings toggles** save immediately (optimistic, rolled back on error) and are disabled offline. The section only shows once the settings have loaded.
-- **Push:**
-  - Shown as a banner even while the app is open.
-  - Asked for on screen 05 only; there's no "enable in Settings" path if the member said no.
-  - Registered again on each start if the token changed.
-  - Unregistered on logout, before the session is revoked.
-- **Copy not in the design, needs sign-off:**
-  - «أقدم» (group older than a week)
-  - empty state: «ما فيه إشعارات الحين» / «أول ما يصير شي يخصّك، بتلقاه هنا.»
-- `Toggle` now sets `aria-checked`, so web screen readers (and smoke) can see its state.
-
-**Next:** the Phase 1 release still needs the portal API and the device check. There's no M7 in PLAN.md, so ask the owner what comes after M6.
-
----
+**When resuming, start by:**
+- Reading this file, then `docs/RELEASE.md` (§2 setup, §3 checklist, §8 API switch).
+- Checking §4 below for what the owner and club have settled since (store text, privacy policy, app ids, accounts).
+- Updating dependencies only if a native rebuild is needed anyway (Expo SDK 58 at the time of pausing).
+- Working on one branch per fix area with a PR, as before.
 
 ## 6. Gotchas (learned the hard way)
 
