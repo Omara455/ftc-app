@@ -1,12 +1,13 @@
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
+  BottomSheetScrollView,
   BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import type { LucideIcon } from 'lucide-react-native';
-import { forwardRef, useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
+import { BackHandler, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useScreenInsets } from '@/lib/insets';
 
 import { Txt } from '@/components/Txt';
@@ -18,6 +19,13 @@ type Props = {
   children: React.ReactNode;
   accessibilityLabel: string;
   onDismiss?: () => void;
+  /**
+   * Tall sheets (submit, 11): the sheet's top sits this far below the safe-area top
+   * (design: 148 on a 47pt inset → 101) and the content can use flex to push the CTA down.
+   */
+  topOffset?: number;
+  /** Content gap (design: 16, submit uses 14). */
+  gap?: number;
 };
 
 /**
@@ -26,10 +34,27 @@ type Props = {
  * Needs `BottomSheetModalProvider` at the root (app/_layout.tsx).
  */
 export const Sheet = forwardRef<SheetRef, Props>(function Sheet(
-  { children, accessibilityLabel, onDismiss },
+  { children, accessibilityLabel, onDismiss, topOffset, gap },
   ref,
 ) {
   const insets = useScreenInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const inner = useRef<BottomSheetModal>(null);
+  useImperativeHandle(ref, () => inner.current as BottomSheetModal, []);
+
+  // Android back closes the sheet instead of leaving the screen. A ref, not state: a
+  // re-render while the sheet opens upsets gorhom's dynamic sizing (bottom padding cut off).
+  const open = useRef(false);
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!open.current) return false;
+      inner.current?.dismiss();
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
+
+  const fixed = topOffset != null;
   const backdrop = useCallback(
     (p: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -44,8 +69,19 @@ export const Sheet = forwardRef<SheetRef, Props>(function Sheet(
   );
   return (
     <BottomSheetModal
-      ref={ref}
-      onDismiss={onDismiss}
+      ref={inner}
+      onChange={(index) => {
+        open.current = index >= 0;
+      }}
+      onDismiss={() => {
+        open.current = false;
+        onDismiss?.();
+      }}
+      // Only pass sizing props for fixed sheets: an explicit `snapPoints={undefined}` breaks
+      // gorhom's dynamic sizing (the bottom padding gets cut off).
+      {...(fixed
+        ? { enableDynamicSizing: false, snapPoints: [windowHeight - insets.top - topOffset] }
+        : {})}
       backdropComponent={backdrop}
       backgroundStyle={styles.background}
       handleStyle={styles.handleArea}
@@ -53,14 +89,32 @@ export const Sheet = forwardRef<SheetRef, Props>(function Sheet(
       accessibilityLabel={accessibilityLabel}
       keyboardBlurBehavior="restore"
     >
-      <BottomSheetView
-        style={[
-          styles.content,
-          { paddingBottom: Math.max(34, insets.bottom) /* design: 34 incl. the home indicator */ },
-        ]}
-      >
-        {children}
-      </BottomSheetView>
+      {fixed ? (
+        // Tall sheet: scrolls when the keyboard or a long file list doesn't fit.
+        <BottomSheetScrollView
+          style={styles.fill}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            ...styles.content,
+            ...styles.grow,
+            ...(gap != null ? { gap } : null),
+            paddingBottom: Math.max(34, insets.bottom),
+          }}
+        >
+          {children}
+        </BottomSheetScrollView>
+      ) : (
+        // One plain style object: gorhom reads paddingBottom from it to size the sheet.
+        <BottomSheetView
+          style={{
+            ...styles.content,
+            ...(gap != null ? { gap } : null),
+            paddingBottom: Math.max(34, insets.bottom), // design: 34 incl. the home indicator
+          }}
+        >
+          {children}
+        </BottomSheetView>
+      )}
     </BottomSheetModal>
   );
 });
@@ -121,6 +175,8 @@ const styles = StyleSheet.create({
     ...shadow.sheet,
   },
   surface: { overflow: 'hidden' },
+  grow: { flexGrow: 1 },
+  fill: { flex: 1 },
   handleArea: { paddingTop: 10, paddingBottom: 0, alignItems: 'center' },
   handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: color.lineStrong },
   content: { paddingHorizontal: 20, paddingTop: 16, gap: 16 },

@@ -11,8 +11,11 @@ import type {
   LeaderboardResponse,
   MemberCard,
   MemberDetail,
+  LocalFile,
   LoginResponse,
   Me,
+  ProfileInput,
+  SubmitInput,
   Task,
   TaskHistoryResponse,
   TasksResponse,
@@ -33,14 +36,42 @@ export const authApi = {
   forgot: (email: string) => api.post<void>('/auth/forgot', { email }, { auth: false }),
 };
 
+/** Appends a picked file: a File/Blob on web, `{uri, name, type}` on native (RN's FormData). */
+function appendFile(form: FormData, field: string, f: LocalFile) {
+  if (Platform.OS === 'web' && f.file) form.append(field, f.file, f.name);
+  else form.append(field, { uri: f.uri, name: f.name, type: f.mimeType } as unknown as Blob);
+}
+
 export const meApi = {
   get: () => api.get<Me>('/me'),
+  /**
+   * PATCH /me (bio, photo). PHP doesn't parse multipart bodies on PATCH, so this is a POST
+   * with Laravel's `_method=PATCH` override.
+   */
+  update: (input: ProfileInput) => {
+    const form = new FormData();
+    form.append('_method', 'PATCH');
+    form.append('bio', input.bio);
+    if (input.photo) appendFile(form, 'photo', input.photo);
+    return api.post<Me>('/me', form, { mockBody: input });
+  },
 };
 
 export const tasksApi = {
   list: () => api.get<TasksResponse>('/tasks'),
   get: (id: number) => api.get<Task>(`/tasks/${id}`),
   history: (scope: HistoryScope) => api.get<TaskHistoryResponse>(`/tasks/history?scope=${scope}`),
+  /** 409 when the task is full or I already joined. */
+  claim: (id: number) => api.post<Task>(`/tasks/${id}/claim`),
+  leave: (id: number) => api.post<void>(`/tasks/${id}/leave`),
+  submit: (id: number, input: SubmitInput) => {
+    const form = new FormData();
+    form.append('note', input.note);
+    if (input.link) form.append('link', input.link);
+    input.files.forEach((f) => appendFile(form, 'files[]', f));
+    input.keepFiles.forEach((url) => form.append('keepFiles[]', url));
+    return api.post<Task>(`/tasks/${id}/submit`, form, { mockBody: input });
+  },
 };
 
 export const communityApi = {

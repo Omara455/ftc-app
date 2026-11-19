@@ -10,6 +10,8 @@
 //   EXPO_PUBLIC_MOCK_SCENARIO=error → GET /tasks* answers 500 (error state)
 //   EXPO_PUBLIC_MOCK_SCENARIO=deadlines → task 101 due today, task 102 overdue
 //   EXPO_PUBLIC_MOCK_DELAY=ms     → response delay (default 450)
+//   writes (claim / leave / submit / PATCH /me) change in-memory state until the app reloads;
+//   a second claim on a joined or full task answers 409.
 import { onlineManager } from '@tanstack/react-query';
 
 import { matchIndex } from '@/lib/arabic';
@@ -22,9 +24,26 @@ import {
   memberFixture,
 } from '@/mocks/community';
 import { meFixture, MOCK_PASSWORD } from '@/mocks/me';
-import { emptyTasksFixture, historyFixture, taskFixture, tasksFixture } from '@/mocks/tasks';
+import {
+  claimTask,
+  emptyTasksFixture,
+  historyFixture,
+  leaveTask,
+  submitTask,
+  taskFixture,
+  tasksFixture,
+} from '@/mocks/tasks';
 
 import { ApiError } from './errors';
+import type { Me, ProfileInput, SubmitInput } from './types';
+
+// Edit profile (28) changes, kept in memory like the task writes.
+let profile: Pick<Me, 'bio' | 'photoUrl'> = { bio: meFixture.bio, photoUrl: meFixture.photoUrl };
+
+function currentMe(): Me {
+  const me = { ...meFixture, ...profile };
+  return SCENARIO === 'empty' ? { ...me, termHours: 0, pendingHours: 0, tasksDone: 0 } : me;
+}
 
 type MockResponse = { status: number; json: unknown };
 
@@ -93,7 +112,7 @@ export async function mockFetch(
           },
         };
       }
-      return ok({ token: MOCK_TOKEN, user: { ...meFixture, email: b.email || meFixture.email } });
+      return ok({ token: MOCK_TOKEN, user: { ...currentMe(), email: b.email || meFixture.email } });
     }
     case 'POST /auth/forgot':
       if (b.email?.startsWith('offline')) throw new ApiError('network', 'Mock network error');
@@ -110,11 +129,19 @@ export async function mockFetch(
     case 'POST /auth/logout':
       return ok(null, 204);
     case 'GET /me':
-      return ok(
-        SCENARIO === 'empty'
-          ? { ...meFixture, termHours: 0, pendingHours: 0, tasksDone: 0 }
-          : meFixture,
-      );
+      return ok(currentMe());
+    case 'POST /me': {
+      // PATCH /me sent as POST + _method=PATCH (multipart)
+      const input = body as ProfileInput;
+      const bio = input.bio.trim();
+      if (bio.length > 160)
+        return {
+          status: 422,
+          json: { message: 'Invalid.', errors: { bio: ['النبذة أطول من 160 حرف.'] } },
+        };
+      profile = { bio: bio || null, photoUrl: input.photo ? input.photo.uri : profile.photoUrl };
+      return ok(currentMe());
+    }
     case 'GET /tasks':
       if (SCENARIO === 'empty') return ok(emptyTasksFixture());
       return ok(withDeadlines(tasksFixture()));
@@ -137,6 +164,21 @@ export async function mockFetch(
     const id = Number(byId[2]);
     const found = byId[1] === 'committees' ? committeeFixture(id) : memberFixture(id);
     return found ? ok(found) : { status: 404, json: { message: 'Not found.' } };
+  }
+
+  const write = /^POST \/tasks\/(\d+)\/(claim|leave|submit)$/.exec(route);
+  if (write) {
+    const id = Number(write[1]);
+    if (write[2] === 'claim') return claimTask(id);
+    if (write[2] === 'leave') return leaveTask(id);
+    const input = body as SubmitInput;
+    return submitTask(id, {
+      note: input.note,
+      link: input.link,
+      keepFiles: input.keepFiles,
+      // A real upload returns a server URL; the mock keeps the local one.
+      files: input.files.map((f) => ({ name: f.name, size: f.size, url: f.uri })),
+    });
   }
 
   const taskMatch = /^GET \/tasks\/(\d+)$/.exec(route);

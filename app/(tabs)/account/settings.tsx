@@ -74,7 +74,7 @@ export default function Settings() {
             <ListRow
               icon={Pencil}
               title={t.editProfile}
-              onPress={() => router.push('/account/edit-profile' as never)}
+              onPress={() => router.push('/account/edit-profile')}
             />
           ) : null}
           <ListRow

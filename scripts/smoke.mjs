@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// End-to-end smoke test (auth + tasks) against the mock API, in the web build.
+// End-to-end smoke test (auth, tasks, community, account, writes) against the mock API,
+// in the web build. Phase 2 writes are switched on (EXPO_PUBLIC_FLAG_WRITES=1).
 //   npm run smoke            (builds first)
 //   npm run smoke -- --no-build
 import { spawnSync } from 'node:child_process';
@@ -22,7 +23,8 @@ if (!process.argv.includes('--no-build') || !existsSync(DIST)) {
     cwd: ROOT,
     stdio: 'inherit',
     shell: true,
-    env: { ...process.env, EXPO_PUBLIC_API_BASE_URL: '' }, // mock mode
+    // mock mode, with the Phase 2 write flows on
+    env: { ...process.env, EXPO_PUBLIC_API_BASE_URL: '', EXPO_PUBLIC_FLAG_WRITES: '1' },
   });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
@@ -218,6 +220,83 @@ await step('Account → achievements; settings change-password sheet', async () 
   await see('أرسل الرابط');
   await tap('أرسل الرابط');
   await page.getByText('أرسل الرابط').waitFor({ state: 'hidden', timeout: 5000 });
+});
+
+// ── M5: writes (join, leave, submit, edit profile) ───────────────────────────
+// The mock keeps write state in memory: these steps navigate inside the app (no reloads)
+// where they depend on an earlier write.
+await step('join from the detail: sheet → toast, event path, submit after the event', async () => {
+  await page.goto(base + '/tasks/301');
+  await tap('انضم للمهمة');
+  await see('تنضم لهذي المهمة؟');
+  await tap('تأكيد الانضمام');
+  await see('انضممت للمهمة، بالتوفيق!');
+  await see('الفعالية');
+  await see('أنت، سلمان، ومحمد');
+  await see('التسليم بعد الفعالية');
+});
+
+await step('leave: confirm sheet → back to Tasks, the task is available again', async () => {
+  await tap('انسحاب');
+  await see('تنسحب من المهمة؟');
+  await tap('نعم، انسحب');
+  await expectUrl('/tasks');
+  await see('متاحة للجنتك');
+  // the task is back under «متاحة للجنتك» straight away (optimistic), first in the list
+  await page.getByText('انضم للمهمة', { exact: true }).first().waitFor({ timeout: 5000 });
+});
+
+await step('join from a Tasks card opens the task with the toast', async () => {
+  await page.getByText('انضم للمهمة', { exact: true }).first().click();
+  await see('تنضم لهذي المهمة؟');
+  await tap('تأكيد الانضمام');
+  await expectUrl('/tasks/301');
+  await see('انضممت للمهمة، بالتوفيق!');
+});
+
+await step('submit: note + link → submitted state with my submission', async () => {
+  await page.goto(base + '/tasks/101');
+  await tap('سلّم المهمة');
+  await see('إرسال للاعتماد');
+  await fill('وش أنجزت؟', 'وثّقت مسارات الدخول والمهام مع أمثلة.');
+  await see('37 / 500');
+  await fill('رابط العمل', 'github.com/ftcksu/portal/pull/142');
+  await tap('إرسال للاعتماد');
+  await see('وصل تسليمك لفيصل');
+  await see('github.com/ftcksu/portal/pull/142');
+});
+
+await step('edit submission opens the sheet prefilled', async () => {
+  await tap('تعديل التسليم');
+  const note = await page.getByLabel('وش أنجزت؟', { exact: true }).first().inputValue();
+  if (!note.startsWith('وثّقت مسارات الدخول')) throw new Error(`note not prefilled: "${note}"`);
+  await page.getByLabel('إغلاق', { exact: true }).click();
+  await page.getByText('إرسال للاعتماد').waitFor({ state: 'hidden', timeout: 5000 });
+});
+
+await step('offline: write buttons are locked', async () => {
+  await page.goto(base + '/tasks/302');
+  await see('انضم للمهمة');
+  await page.context().setOffline(true);
+  await see('ما فيه اتصال بالإنترنت');
+  const join = page.getByRole('button', { name: 'انضم للمهمة', exact: true });
+  if (!(await join.isDisabled())) throw new Error('join still enabled offline');
+  await page.context().setOffline(false);
+  await page.getByText('ما فيه اتصال بالإنترنت').waitFor({ state: 'detached', timeout: 5000 });
+});
+
+await step('edit profile: read-only fields, bio saves', async () => {
+  await page.goto(base + '/account/settings');
+  await tap('تعديل الملف');
+  await expectUrl('/account/edit-profile');
+  await see('الاسم والرقم الجامعي واللجنة تعدّلها الموارد البشرية في البوابة.');
+  await fill('نبذة عنك', 'أحب تصميم الواجهات.');
+  await see('19 / 160');
+  await tap('حفظ');
+  await expectUrl('/account/settings');
+  await tap('تعديل الملف');
+  const bio = await page.getByLabel('نبذة عنك', { exact: true }).inputValue();
+  if (bio !== 'أحب تصميم الواجهات.') throw new Error(`bio not saved: "${bio}"`);
 });
 
 await step('tab bar switches tabs', async () => {

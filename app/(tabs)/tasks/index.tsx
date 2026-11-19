@@ -1,11 +1,13 @@
 // Screen 06 (Tasks) with its states: 15 empty, 18 loading, 19 offline, + error.
 import { router } from 'expo-router';
 import { Bell, Code } from 'lucide-react-native';
+import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useMe, useTasks } from '@/api/hooks';
 import type { TaskSummary } from '@/api/types';
 import { IconButton } from '@/components/Button';
+import type { SheetRef } from '@/components/Sheet';
 import { ErrorState } from '@/components/ErrorState';
 import { LockedNotice, OfflineBanner } from '@/components/OfflineBanner';
 import { SectionHeading } from '@/components/SectionHeading';
@@ -16,6 +18,7 @@ import { flags } from '@/config/flags';
 import { deadlineInfo } from '@/features/tasks/deadline';
 import { EmptyTasks } from '@/features/tasks/EmptyTasks';
 import { StatsCard } from '@/features/tasks/StatsCard';
+import { JoinSheet } from '@/features/tasks/sheets/JoinSheet';
 import { SubtitleSkeleton, TasksSkeleton } from '@/features/tasks/TasksSkeleton';
 import { ar } from '@/i18n/ar';
 import { ago, timeRange, weekdayDayMonth } from '@/i18n/dates';
@@ -30,6 +33,13 @@ export default function Tasks() {
   const tasks = useTasks();
   const offline = useIsOffline();
   const data = tasks.data;
+  // «انضم للمهمة» on a card opens the join sheet (08); joining opens the task (09).
+  const joinSheet = useRef<SheetRef>(null);
+  const [joining, setJoining] = useState<TaskSummary | null>(null);
+  const join = (t: TaskSummary) => {
+    setJoining(t);
+    joinSheet.current?.present();
+  };
 
   const refresh = () => {
     void me.refetch();
@@ -90,8 +100,8 @@ export default function Tasks() {
                     joined={t.joinedCount}
                     capacity={t.capacity}
                     onPress={() => openTask(t.id)}
-                    // Joining is Phase 2 (flags.writes); the button opens the join sheet in M5.
-                    onJoin={flags.writes ? () => openTask(t.id) : undefined}
+                    // Joining is Phase 2 (flags.writes)
+                    onJoin={flags.writes ? () => join(t) : undefined}
                     joinLocked={offline}
                   />
                 ))}
@@ -153,6 +163,7 @@ export default function Tasks() {
       }
     >
       {body}
+      {flags.writes ? <JoinSheet ref={joinSheet} task={joining} onJoined={openTask} /> : null}
     </TabScreen>
   );
 }

@@ -1,7 +1,8 @@
 // Task detail — one screen for every state (PLAN M3):
 //   myState null → 07 available · working → 10 · submitted → 12 · returned → 13 · approved
-// Write actions (join, submit, leave, edit) are Phase 2: shown only with flags.writes,
-// and locked while offline. Their sheets arrive in M5.
+//   working + event task right after joining → 09 (toast, event stepper, submit after the event)
+// Write actions (join 08, submit 11, leave 14, edit) are Phase 2: shown only with flags.writes,
+// and locked while offline.
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   Calendar,
@@ -13,6 +14,7 @@ import {
   Plus,
   Upload,
 } from 'lucide-react-native';
+import { useRef } from 'react';
 import { Linking, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTask } from '@/api/hooks';
@@ -23,6 +25,7 @@ import { Header } from '@/components/Header';
 import { InfoGrid, InfoTile } from '@/components/InfoTile';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenBackground } from '@/components/ScreenBackground';
+import type { SheetRef } from '@/components/Sheet';
 import { StickyBar, STICKY_BAR_HEIGHT } from '@/components/StickyBar';
 import { Stepper } from '@/components/Stepper';
 import { flags } from '@/config/flags';
@@ -30,17 +33,26 @@ import {
   buildSteps,
   DescriptionCard,
   DetailSkeleton,
+  EventLine,
+  eventOver,
+  isEventTask,
   JoinedSection,
+  JoinedToast,
+  JoinedWithMeSection,
   PeopleSection,
   ReturnNoteCard,
   SubmissionCard,
   SubmittedBanner,
   TaskHeading,
 } from '@/features/tasks/detail/parts';
+import { JoinSheet } from '@/features/tasks/sheets/JoinSheet';
+import { LeaveSheet } from '@/features/tasks/sheets/LeaveSheet';
+import { SubmitSheet } from '@/features/tasks/sheets/SubmitSheet';
 import { ar } from '@/i18n/ar';
 import { ago, dayMonth, timeRange, weekday } from '@/i18n/dates';
 import { firstName, hoursLabel } from '@/i18n/format';
 import { useScreenInsets } from '@/lib/insets';
+import { useTaskFlash } from '@/lib/flash';
 import { useIsOffline } from '@/lib/network';
 import { color, hue, space } from '@/theme/tokens';
 
@@ -52,7 +64,19 @@ export default function TaskDetail() {
   const offline = useIsOffline();
   const insets = useScreenInsets();
   const task = query.data;
-  const cta = task ? <Cta task={task} offline={offline} /> : null;
+  const joined = useTaskFlash(Number(id)) === 'joined';
+  const joinSheet = useRef<SheetRef>(null);
+  const submitSheet = useRef<SheetRef>(null);
+  const leaveSheet = useRef<SheetRef>(null);
+  const cta = task ? (
+    <Cta
+      task={task}
+      offline={offline}
+      onJoin={() => joinSheet.current?.present()}
+      onSubmit={() => submitSheet.current?.present()}
+      onLeave={() => leaveSheet.current?.present()}
+    />
+  ) : null;
 
   return (
     <View style={styles.screen}>
@@ -81,7 +105,7 @@ export default function TaskDetail() {
           />
         ) : null}
         {task ? (
-          <Body task={task} />
+          <Body task={task} joined={joined} />
         ) : query.isError && !offline ? (
           <ErrorState onRetry={() => void query.refetch()} />
         ) : (
@@ -89,13 +113,41 @@ export default function TaskDetail() {
         )}
       </ScrollView>
       {cta}
+      {flags.writes && task ? (
+        <>
+          <JoinSheet ref={joinSheet} task={task} />
+          <SubmitSheet ref={submitSheet} task={task} />
+          <LeaveSheet
+            ref={leaveSheet}
+            taskId={task.id}
+            onLeft={() => (router.canGoBack() ? router.back() : router.replace('/tasks'))}
+          />
+        </>
+      ) : null}
     </View>
   );
 }
 
-function Body({ task }: { task: Task }) {
+function Body({ task, joined }: { task: Task; joined: boolean }) {
   const steps = buildSteps(task);
   const stepper = steps ? <Stepper title={t.path} {...steps} /> : null;
+  const toast = joined && task.myState === 'working' ? <JoinedToast /> : null;
+
+  // 09: an event task I've joined, before the event
+  if (task.myState === 'working' && isEventTask(task) && !eventOver(task)) {
+    return (
+      <>
+        {toast}
+        <View style={styles.gap8}>
+          <TaskHeading task={task} showCreator={false} event />
+          <EventLine task={task} />
+        </View>
+        {stepper}
+        <JoinedWithMeSection task={task} />
+        <DescriptionCard text={task.description} />
+      </>
+    );
+  }
 
   switch (task.myState) {
     case null: // 07 available
@@ -127,6 +179,7 @@ function Body({ task }: { task: Task }) {
     case 'working': // 10
       return (
         <>
+          {toast}
           <TaskHeading task={task} showCreator />
           <InfoGrid>
             <InfoTile icon={Clock} label={t.hours} value={hoursLabel(task.hours)} />
@@ -183,34 +236,54 @@ function Body({ task }: { task: Task }) {
   }
 }
 
+type CtaProps = {
+  task: Task;
+  offline: boolean;
+  onJoin: () => void;
+  onSubmit: () => void;
+  onLeave: () => void;
+};
+
 /** Sticky actions per state (Phase 2). Returns null when there's nothing to do. */
-function Cta({ task, offline }: { task: Task; offline: boolean }) {
+function Cta({ task, offline, onJoin, onSubmit, onLeave }: CtaProps) {
   if (!flags.writes) return null;
-  // M5 wires these to the join / submit / leave sheets.
   switch (task.myState) {
     case null:
       return task.canClaim ? (
         <StickyBar>
-          <Button label={t.join} icon={Plus} locked={offline} />
+          <Button label={t.join} icon={Plus} locked={offline} onPress={onJoin} />
         </StickyBar>
       ) : null;
-    case 'working':
-      return task.canSubmit || task.canLeave ? (
+    case 'working': {
+      // 09: an event task can't be submitted before the event
+      const waiting = !task.canSubmit && isEventTask(task) && !eventOver(task);
+      const first = task.canSubmit ? (
+        <Button
+          label={t.submit}
+          icon={Upload}
+          locked={offline}
+          onPress={onSubmit}
+          style={styles.flex}
+        />
+      ) : waiting ? (
+        <Button label={t.submitAfterEvent} variant="waiting" style={styles.flex} />
+      ) : null;
+      return first || task.canLeave ? (
         <StickyBar row>
-          {task.canSubmit ? (
-            <Button label={t.submit} icon={Upload} locked={offline} style={styles.flex} />
-          ) : null}
+          {first}
           {task.canLeave ? (
             <Button
               label={t.leave}
               variant="secondary"
               onSurface
               locked={offline}
-              style={task.canSubmit ? styles.leave : styles.flex}
+              onPress={onLeave}
+              style={first ? styles.leave : styles.flex}
             />
           ) : null}
         </StickyBar>
       ) : null;
+    }
     case 'submitted':
       return task.canEditSubmission ? (
         <StickyBar>
@@ -220,13 +293,14 @@ function Cta({ task, offline }: { task: Task; offline: boolean }) {
             onSurface
             icon={Pencil}
             locked={offline}
+            onPress={onSubmit}
           />
         </StickyBar>
       ) : null;
     case 'returned':
       return task.canSubmit ? (
         <StickyBar>
-          <Button label={t.resubmit} icon={Upload} locked={offline} />
+          <Button label={t.resubmit} icon={Upload} locked={offline} onPress={onSubmit} />
         </StickyBar>
       ) : null;
     default:
@@ -238,5 +312,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.gutter, paddingTop: 14, gap: 16 },
   flex: { flex: 1 },
+  gap8: { gap: 8 },
   leave: { width: 104 },
 });

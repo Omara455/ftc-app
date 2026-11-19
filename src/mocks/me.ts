@@ -14,7 +14,7 @@ export const meFixture: Me = {
   email: 'abdullah@student.ksu.edu.sa',
   committee: { id: 1, key: 'tech', name: 'التقنية' },
   role: 'عضو',
-  bio: null,
+  bio: 'أطوّر تطبيقات الجوال، وأحب الهاكاثونات.',
   photoUrl: null,
   league: 'silver',
   termHours: 14,

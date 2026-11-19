@@ -1,8 +1,9 @@
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import type { LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
-import { Txt } from '@/components/Txt';
+import { Ltr, Txt } from '@/components/Txt';
 import { color, font, radius, tint } from '@/theme/tokens';
 
 type Props = Omit<TextInputProps, 'style'> & {
@@ -21,6 +22,10 @@ type Props = Omit<TextInputProps, 'style'> & {
   onSurface?: boolean;
   /** Preview only (/dev/kit): render the focused style without focus. */
   forceFocus?: boolean;
+  /** Inside a bottom sheet: keeps the sheet above the keyboard. */
+  inSheet?: boolean;
+  /** Shows «38 / 160» under the field (needs maxLength). */
+  counter?: boolean;
   ref?: React.Ref<React.ComponentRef<typeof TextInput>>;
 };
 
@@ -33,6 +38,8 @@ export function TextField({
   height = 50,
   onSurface,
   forceFocus,
+  inSheet,
+  counter,
   ref,
   onFocus,
   onBlur,
@@ -41,6 +48,9 @@ export function TextField({
 }: Props) {
   const [hasFocus, setFocused] = useState(false);
   const focused = hasFocus || !!forceFocus;
+  const multiline = !!input.multiline;
+  // gorhom's input keeps the sheet above the keyboard; it needs native TextInput APIs, so not on web.
+  const Input = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   const borderColor = error ? color.danger : focused ? color.brand : color.line;
 
   return (
@@ -55,6 +65,7 @@ export function TextField({
         <View
           style={[
             styles.box,
+            multiline && styles.boxMultiline,
             {
               height,
               borderColor,
@@ -70,8 +81,8 @@ export function TextField({
               strokeWidth={1.8}
             />
           ) : null}
-          <TextInput
-            ref={ref}
+          <Input
+            ref={ref as never}
             {...input}
             secureTextEntry={secureTextEntry}
             accessibilityLabel={input.accessibilityLabel ?? label}
@@ -87,6 +98,7 @@ export function TextField({
             }}
             style={[
               styles.input,
+              multiline && styles.inputMultiline,
               ltr && styles.ltr,
               secureTextEntry && input.value ? styles.secure : null,
               Platform.OS === 'web' && webNoOutline,
@@ -95,6 +107,11 @@ export function TextField({
           {trailing}
         </View>
       </View>
+      {counter && input.maxLength ? (
+        <Txt size={11.5} weight="regular" color={color.inkSoft} style={styles.counter}>
+          <Ltr>{`${(input.value ?? '').length} / ${input.maxLength}`}</Ltr>
+        </Txt>
+      ) : null}
       {typeof error === 'string' && error ? (
         <Txt variant="meta" size={12.5} weight="regular" color={color.dangerText}>
           {error}
@@ -136,6 +153,17 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   ltr: { textAlign: 'left', writingDirection: 'ltr' },
+  // Textarea (bio, submission note): 12/14 padding, 14.5 at 1.7, text from the top
+  boxMultiline: { alignItems: 'flex-start', paddingStart: 14, paddingEnd: 14, paddingVertical: 12 },
+  inputMultiline: {
+    paddingEnd: 0,
+    fontSize: 14.5,
+    lineHeight: 14.5 * 1.7,
+    textAlignVertical: 'top',
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
+  counter: { alignSelf: 'flex-end' },
   secure: { letterSpacing: 2 },
 });
 

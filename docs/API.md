@@ -38,12 +38,12 @@
 |---|---|---|---|
 | POST | `/tasks/{id}/claim` | 08 | Returns `Task`. `409` if the task is full or the member already joined |
 | POST | `/tasks/{id}/leave` | 14 | Returns `204` |
-| POST | `/tasks/{id}/submit` | 11, 13 | multipart: `note` (≤500), `link?`, `files[]?`. Returns `Task` |
+| POST | `/tasks/{id}/submit` | 11, 13 | multipart: `note` (≤500), `link?`, `files[]?` (≤10 MB each), `keepFiles[]?` (M5 proposal). Returns `Task` |
 | GET | `/notifications?cursor=` | 17 | `{items: Notification[], nextCursor}` |
 | POST | `/notifications/read` | 17 | `{ids?: number[]}`. Marks everything read if `ids` is empty |
 | POST | `/devices` | 05 | `{expoPushToken, platform}`. Delete on logout |
 | GET/PATCH | `/me/notification-settings` | 27 | `{newTasks, reviewResult, deadlineReminder, leagueUpdates}` (booleans) |
-| PATCH | `/me` | 28 | multipart: `bio` (≤160), `photo?`. **Only these two fields.** |
+| PATCH | `/me` | 28 | multipart: `bio` (≤160), `photo?`. **Only these two fields.** Returns `Me`. Sent as `POST /me` with `_method=PATCH` (PHP doesn't parse multipart bodies on PATCH) |
 
 Push notifications are sent by the portal through the Expo Push API whenever these events happen: task created for a committee, submission returned, submission approved, deadline in 3 days, achievement unlocked, league changed.
 
@@ -99,6 +99,12 @@ interface Notification { id: number; type: 'task_returned'|'task_new'|'deadline'
 ```
 
 **Privacy:** `RankRow.hours` exists only on `/leaderboard`. `MemberCard` never includes hours.
+
+**M5 proposals (writes):**
+- **`keepFiles[]` on submit:** editing a submission (12) or resubmitting (13) opens the form with the files already uploaded. The app sends the `url`s of the ones the member kept as `keepFiles[]`; any others are deleted. New files go in `files[]` as before. (`FileRef` has no id, so the URL is the key. An `id` would be fine too.)
+- **Event tasks:** a task with `timeFrom` is an event, and its `deadline` is the event's end. Before that, the app expects `canSubmit: false` and shows «التسليم بعد الفعالية» (screen 09). Please confirm this matches the portal's rule.
+- **`POST /me` + `_method=PATCH`** for the multipart profile update (see the table), returning the updated `Me`.
+- `claim` returns `409` for "full" and "already joined" alike; the app shows «ما بقى مكان في هالمهمة.» for both.
 
 **M4 proposals:** `MemberCard.roleKind`, `Committee.title` and `.mixed`, typed `Me.recentActivity` (`Activity`), and on `GET /members/{id}` the counts `achievementsUnlocked` / `achievementsTotal` («7 من 9»). `GET /members?q=` is now used (server search with Arabic letter folding: أ/إ/آ→ا, ة→ه, ى→ي).
 

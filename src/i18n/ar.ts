@@ -248,6 +248,58 @@ export const ar = {
     leave: 'انسحاب',
     editSubmission: 'تعديل التسليم',
     resubmit: 'عدّل وأعد التسليم',
+    // 09 Joined (event task): toast, event step, locked submit
+    joinedToast: 'انضممت للمهمة، بالتوفيق!',
+    joinedToastSub: 'صارت ضمن «مهامي»',
+    stepEvent: 'الفعالية',
+    now: 'الحين',
+    afterIt: 'بعدها',
+    submitAfterEvent: 'التسليم بعد الفعالية',
+  },
+  sheets: {
+    // 08 Join confirm
+    joinLabel: 'تأكيد الانضمام',
+    joinTitle: 'تنضم لهذي المهمة؟',
+    joinBody: 'بتظهر في «مهامي»، ويوصلك تذكير قبل موعدها.',
+    joinLeaveLater: 'تقدر تنسحب لاحقًا من صفحة المهمة.',
+    joinConfirm: 'تأكيد الانضمام',
+    // 14 Leave confirm
+    leaveLabel: 'تأكيد الانسحاب',
+    leaveTitle: 'تنسحب من المهمة؟',
+    leaveBody:
+      'بيتحرّر مكانك لعضو ثاني، وما تنحسب لك ساعات هذي المهمة. تقدر تنضم لها من جديد إذا بقى فيها مكان.',
+    leaveConfirm: 'نعم، انسحب',
+    leaveCancel: 'لا، أكمل المهمة',
+    // 11 Submit
+    submitTitle: 'تسليم المهمة',
+    close: 'إغلاق',
+    note: 'وش أنجزت؟',
+    link: 'رابط العمل',
+    attachments: 'المرفقات',
+    optional: 'اختياري',
+    addFile: 'أضف صورة أو ملف',
+    upTo: '· حتى 10 م.ب',
+    uploaded: 'تم الرفع',
+    removeFile: 'إزالة الملف',
+    /** «يراجعها فيصل، ويوصلك إشعار بالنتيجة.» / «تراجعها هيفاء، …» (reviewer's gender) */
+    reviewer: (name: string, gender: 'male' | 'female') =>
+      `${gender === 'female' ? 'تراجعها' : 'يراجعها'} ${name}، ويوصلك إشعار بالنتيجة.`,
+    send: 'إرسال للاعتماد',
+    // Not in the design — need sign-off (M5):
+    fileTooBig: 'الملف أكبر من 10 م.ب، اختر ملف أصغر.',
+    taskFull: 'ما بقى مكان في هالمهمة.',
+    notAllowed: 'ما تقدر تسوي هذا على هالمهمة الحين.',
+  },
+  editProfile: {
+    // 28
+    title: 'تعديل الملف',
+    save: 'حفظ',
+    changePhoto: 'تغيير الصورة',
+    bio: 'نبذة عنك',
+    name: 'الاسم',
+    universityId: 'الرقم الجامعي',
+    committeeRole: 'اللجنة والدور',
+    hrNote: 'الاسم والرقم الجامعي واللجنة تعدّلها الموارد البشرية في البوابة.',
   },
   offline: {
     title: 'ما فيه اتصال بالإنترنت',

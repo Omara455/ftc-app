@@ -12,6 +12,8 @@ type Options = {
   /** Login / forgot don't send a token, and a 401 there means "wrong credentials", not "log out". */
   auth?: boolean;
   signal?: AbortSignal;
+  /** Mock mode only: the plain input behind a FormData body, so the mock needn't parse multipart. */
+  mockBody?: unknown;
 };
 
 let token: string | null = null;
@@ -28,13 +30,13 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
 }
 
 export async function request<T>(method: Method, path: string, opts: Options = {}): Promise<T> {
-  const { body, auth = true, signal } = opts;
+  const { body, auth = true, signal, mockBody } = opts;
 
   let status: number;
   let json: unknown = null;
 
   if (MOCK_MODE) {
-    ({ status, json } = await mockFetch(method, path, body, auth ? token : null));
+    ({ status, json } = await mockFetch(method, path, mockBody ?? body, auth ? token : null));
   } else {
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (body !== undefined && !(body instanceof FormData))
