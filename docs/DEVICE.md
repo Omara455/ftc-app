@@ -31,3 +31,16 @@ Daily use:
 - Cairo at every weight (400–800), the bottom sheet opening and closing with a drag, and toggles animating.
 - `+3`, `6 / 25` and emails keep their order inside Arabic text.
 - The launcher icon, splash and notification icon (status bar) show the FTC mark.
+
+## Push notifications (M6)
+Pushes only work in a native build with `EXPO_PUBLIC_FLAG_NOTIFICATIONS=1`; web never registers. Android also needs Firebase Cloud Messaging set up once:
+1. Make sure `eas init` has been run: the push token needs `extra.eas.projectId` in `app.json`. Without it the app logs `push: no EAS projectId` and skips registration.
+2. Create a Firebase project and add an Android app with the package `com.ftcksu.app`. Download `google-services.json` into the repo root and set `"googleServicesFile": "./google-services.json"` under `android` in `app.json`.
+3. In Firebase → Project settings → Service accounts, generate a private key. Upload it with `eas credentials` → Android → Google Service Account → FCM V1.
+4. Rebuild the development build (step 5 above). On the emulator, use a system image **with Google Play**.
+
+To test:
+- Sign in (screen 05 appears once) and tap «فعّل الإشعارات». The Metro log prints `push token ExponentPushToken[…]`, and the app sends it with `POST /devices`.
+- Open https://expo.dev/notifications, paste the token, and add JSON data such as `{"type":"task_returned","taskId":102,"notificationId":6}`. Send it.
+- Check it shows while the app is open, in the background, and when the app is closed. Tapping it should open the right screen: `task_returned` / `task_new` / `deadline` → the task, `task_approved` → history, `achievement` → achievements, `league` → leaderboard. Check this after a cold start too.
+- Sign out: the app sends `DELETE /devices/{token}` («بتوقف الإشعارات على هذا الجهاز»).

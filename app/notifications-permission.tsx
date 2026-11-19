@@ -1,6 +1,6 @@
 // Screen 05: shown once after the first login (Phase 2, behind flags.notifications).
-// «فعّل الإشعارات» asks for the OS permission. Registering the Expo push token with
-// POST /devices is M6.
+// «فعّل الإشعارات» asks for the OS permission, then registers the Expo push token
+// (POST /devices).
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { Bell } from 'lucide-react-native';
@@ -11,6 +11,7 @@ import FtcMark from '@/assets/ftc-mark-white.svg';
 import { useAuth } from '@/auth/AuthProvider';
 import { Button } from '@/components/Button';
 import { ScreenBackground } from '@/components/ScreenBackground';
+import { registerForPush } from '@/lib/push';
 import { Ltr, Txt } from '@/components/Txt';
 import { ar } from '@/i18n/ar';
 import { useScreenInsets } from '@/lib/insets';
@@ -26,7 +27,10 @@ export default function NotificationsPermission() {
   async function finish(ask: boolean) {
     setBusy(true);
     try {
-      if (ask) await Notifications.requestPermissionsAsync();
+      if (ask) {
+        const { granted } = await Notifications.requestPermissionsAsync();
+        if (granted) await registerForPush();
+      }
     } catch {
       // Denied or unsupported (web): carry on, the member can enable it in Settings.
     }

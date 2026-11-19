@@ -14,6 +14,8 @@ import type {
   LocalFile,
   LoginResponse,
   Me,
+  NotificationSettings,
+  NotificationsPage,
   ProfileInput,
   SubmitInput,
   Task,
@@ -84,6 +86,26 @@ export const communityApi = {
 
 export const leaderboardApi = {
   get: () => api.get<LeaderboardResponse>('/leaderboard'),
+};
+
+export const notificationsApi = {
+  list: (cursor: string | null) =>
+    api.get<NotificationsPage>(
+      cursor ? `/notifications?cursor=${encodeURIComponent(cursor)}` : '/notifications',
+    ),
+  /** Empty `ids` marks everything read. */
+  markRead: (ids?: number[]) => api.post<void>('/notifications/read', ids ? { ids } : {}),
+  settings: () => api.get<NotificationSettings>('/me/notification-settings'),
+  updateSettings: (patch: Partial<NotificationSettings>) =>
+    api.patch<NotificationSettings>('/me/notification-settings', patch),
+};
+
+export const devicesApi = {
+  register: (expoPushToken: string) =>
+    api.post<void>('/devices', { expoPushToken, platform: Platform.OS }),
+  /** M6 proposal: DELETE /devices/{expoPushToken} on logout. */
+  unregister: (expoPushToken: string) =>
+    api.del<void>(`/devices/${encodeURIComponent(expoPushToken)}`),
 };
 
 export const achievementsApi = {

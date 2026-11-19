@@ -26,4 +26,6 @@ export const keys = {
   notificationsPrompted: 'ftc.notificationsPrompted',
   /** «الدخول بالبصمة» toggle (screen 27). */
   biometric: 'ftc.biometric',
+  /** Expo push token registered with POST /devices (removed again on logout). */
+  pushToken: 'ftc.pushToken',
 } as const;

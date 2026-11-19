@@ -19,6 +19,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { persistOptions, queryClient } from '@/api/queryClient';
 import { AuthProvider, useAuth } from '@/auth/AuthProvider';
+import { PushBridge } from '@/features/notifications/PushBridge';
 import '@/lib/network'; // wires NetInfo into TanStack's onlineManager
 import { color } from '@/theme/tokens';
 
@@ -76,25 +77,29 @@ function RootStack() {
 
   const signedIn = status === 'signedIn';
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: color.bg },
-      }}
-    >
-      {/* index only redirects; it's the anchor protected routes fall back to */}
-      <Stack.Screen name="index" />
-      <Stack.Protected guard={!signedIn}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-      <Stack.Protected guard={signedIn}>
-        <Stack.Protected guard={needsNotificationPrompt}>
-          <Stack.Screen name="notifications-permission" options={{ gestureEnabled: false }} />
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: color.bg },
+        }}
+      >
+        {/* index only redirects; it's the anchor protected routes fall back to */}
+        <Stack.Screen name="index" />
+        <Stack.Protected guard={!signedIn}>
+          <Stack.Screen name="(auth)" />
         </Stack.Protected>
-        <Stack.Screen name="(tabs)" />
-      </Stack.Protected>
-      <Stack.Screen name="dev/kit" />
-    </Stack>
+        <Stack.Protected guard={signedIn}>
+          <Stack.Protected guard={needsNotificationPrompt}>
+            <Stack.Screen name="notifications-permission" options={{ gestureEnabled: false }} />
+          </Stack.Protected>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="notifications" />
+        </Stack.Protected>
+        <Stack.Screen name="dev/kit" />
+      </Stack>
+      {signedIn ? <PushBridge /> : null}
+    </>
   );
 }
 

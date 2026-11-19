@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // End-to-end smoke test (auth, tasks, community, account, writes) against the mock API,
-// in the web build. Phase 2 writes are switched on (EXPO_PUBLIC_FLAG_WRITES=1).
+// in the web build. Phase 2 is switched on: writes and notifications.
 //   npm run smoke            (builds first)
 //   npm run smoke -- --no-build
 import { spawnSync } from 'node:child_process';
@@ -24,7 +24,12 @@ if (!process.argv.includes('--no-build') || !existsSync(DIST)) {
     stdio: 'inherit',
     shell: true,
     // mock mode, with the Phase 2 write flows on
-    env: { ...process.env, EXPO_PUBLIC_API_BASE_URL: '', EXPO_PUBLIC_FLAG_WRITES: '1' },
+    env: {
+      ...process.env,
+      EXPO_PUBLIC_API_BASE_URL: '',
+      EXPO_PUBLIC_FLAG_WRITES: '1',
+      EXPO_PUBLIC_FLAG_NOTIFICATIONS: '1',
+    },
   });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
@@ -79,14 +84,20 @@ await step('network failure shows the offline message', async () => {
   await see('ما فيه اتصال بالإنترنت');
 });
 
-await step('correct password signs in and opens Tasks', async () => {
-  await fill('البريد الإلكتروني', 'abdullah@student.ksu.edu.sa');
-  await fill('كلمة المرور', 'ftc-portal');
-  await tap('تسجيل الدخول');
-  await expectUrl('/tasks');
-  await see('مهام اللجنة التقنية');
-  if ((await token()) !== 'mock-token') throw new Error('token not stored');
-});
+await step(
+  'correct password signs in, asks about notifications once (05), opens Tasks',
+  async () => {
+    await fill('البريد الإلكتروني', 'abdullah@student.ksu.edu.sa');
+    await fill('كلمة المرور', 'ftc-portal');
+    await tap('تسجيل الدخول');
+    await expectUrl('/notifications-permission');
+    await see('خلّك أول من يعرف');
+    await tap('لاحقًا');
+    await expectUrl('/tasks');
+    await see('مهام اللجنة التقنية');
+    if ((await token()) !== 'mock-token') throw new Error('token not stored');
+  },
+);
 
 await step('session survives a reload', async () => {
   await page.reload();
@@ -300,6 +311,58 @@ await step('edit profile: read-only fields, bio saves', async () => {
   await tap('تعديل الملف');
   const bio = await page.getByLabel('نبذة عنك', { exact: true }).inputValue();
   if (bio !== 'أحب تصميم الواجهات.') throw new Error(`bio not saved: "${bio}"`);
+});
+
+// ── M6: notifications ────────────────────────────────────────────────────────
+// 17 stays mounted under the screen it opens, so pick the back button that's on screen.
+const visibleBack = () => page.getByLabel('رجوع', { exact: true }).locator('visible=true');
+
+await step('bell → notifications grouped by day, unread first', async () => {
+  await page.goto(base + '/tasks');
+  await page.getByLabel('الإشعارات، غير مقروء', { exact: true }).click();
+  await expectUrl('/notifications');
+  await see('اليوم');
+  await see('هالأسبوع');
+  await see('رجّع فيصل تسليمك');
+  await see('تحديد الكل كمقروء');
+});
+
+await step('tapping a notification marks it read and opens its task', async () => {
+  await tap('رجّع فيصل تسليمك');
+  await expectUrl('/tasks/102');
+  await see('ملاحظة فيصل');
+  await visibleBack().click();
+  await expectUrl('/notifications');
+  const row = page.getByRole('button', { name: /رجّع فيصل تسليمك/ });
+  if ((await row.getAttribute('aria-label'))?.startsWith('غير مقروء'))
+    throw new Error('notification still unread');
+});
+
+await step('mark all read clears the unread state and the bell dot', async () => {
+  await tap('تحديد الكل كمقروء');
+  await page.getByText('تحديد الكل كمقروء').waitFor({ state: 'detached', timeout: 5000 });
+  await visibleBack().click();
+  await expectUrl('/tasks');
+  await page.getByLabel('الإشعارات', { exact: true }).waitFor({ timeout: 5000 });
+});
+
+await step('notification toggles are saved on the server', async () => {
+  await page.goto(base + '/account');
+  const openSettings = async () => {
+    await page.getByLabel('الإعدادات', { exact: true }).click();
+    await expectUrl('/account/settings');
+  };
+  await openSettings();
+  const toggle = page.getByRole('switch', { name: 'تحديثات الصدارة والمستوى', exact: true });
+  await toggle.waitFor({ timeout: 5000 });
+  if ((await toggle.getAttribute('aria-checked')) !== 'false') throw new Error('expected off');
+  await toggle.click();
+  // Leave and come back inside the app (a reload would reset the mock's saved state).
+  await visibleBack().click();
+  await expectUrl('/account');
+  await openSettings();
+  await page.waitForTimeout(800);
+  if ((await toggle.getAttribute('aria-checked')) !== 'true') throw new Error('toggle not saved');
 });
 
 await step('tab bar switches tabs', async () => {

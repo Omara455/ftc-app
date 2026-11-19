@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useMe, useTasks } from '@/api/hooks';
+import { useHasUnread } from '@/api/notifications';
 import type { TaskSummary } from '@/api/types';
 import { IconButton } from '@/components/Button';
 import type { SheetRef } from '@/components/Sheet';
@@ -156,15 +157,28 @@ export default function Tasks() {
             )}
           </View>
           {/* Notifications (screen 17) are Phase 2 */}
-          {flags.notifications && !offline ? (
-            <IconButton icon={Bell} accessibilityLabel={ar.tabs.notifications} />
-          ) : null}
+          {flags.notifications && !offline ? <NotificationsBell /> : null}
         </View>
       }
     >
       {body}
       {flags.writes ? <JoinSheet ref={joinSheet} task={joining} onJoined={openTask} /> : null}
     </TabScreen>
+  );
+}
+
+/** The bell opens screen 17; the glow dot means something is unread. */
+function NotificationsBell() {
+  const unread = useHasUnread();
+  return (
+    <IconButton
+      icon={Bell}
+      badge={unread}
+      accessibilityLabel={
+        unread ? `${ar.tabs.notifications}، ${ar.common.unread}` : ar.tabs.notifications
+      }
+      onPress={() => router.push('/notifications')}
+    />
   );
 }
 

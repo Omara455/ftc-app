@@ -40,7 +40,7 @@ The links between `.dc.html` files are the navigation map. If an `<a href>` in a
 |---|---|---|---|
 | 15 | Empty | `/tasks` with no tasks | Zeroed stats, an inbox illustration and a three-step explainer of how hours are earned. |
 | 16 | Completed history | `/tasks/history` | A segmented control (هالترم / كل الترمات), two stat tiles, and a list of approved tasks with `+N` hours in green. **P1** |
-| 17 | Notifications | `/notifications` | Grouped into اليوم and هالأسبوع. Unread items get a `brandTintSoft` card and a `glow` dot. «تحديد الكل كمقروء». Each type deep-links: returned → 13, new task → 07, reminder → 10, approved → 16, achievement → 26, league → 24. **P2** |
+| 17 | Notifications | `/notifications` | Grouped into اليوم and هالأسبوع. Unread items get a `brandTintSoft` card and a `glow` dot. «تحديد الكل كمقروء». Each type deep-links: returned → 13, new task → 07, reminder → 10, approved → 16, achievement → 26, league → 24. Older than a week goes under «أقدم». Times are relative («قبل ساعة»), except today's deadline reminder, which shows its time («9:00 ص»). A tapped push opens the same screens. **P2** |
 | 18 | Loading | any tab | A skeleton that copies the real layout. Use one shimmer `Skeleton` primitive. |
 | 19 | Offline | any tab | A banner «ما فيه اتصال بالإنترنت» with the last-updated time and «حاول مجددًا». Cached data still shows. Join and submit are replaced by a locked notice. Detect offline with `@react-native-community/netinfo`. |
 

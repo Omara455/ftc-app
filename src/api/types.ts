@@ -244,6 +244,43 @@ export interface ProfileInput {
   photo: LocalFile | null;
 }
 
+// ── Notifications (Phase 2, M6) ──────────────────────────────────────────────
+
+export type NotificationType =
+  'task_returned' | 'task_new' | 'deadline' | 'task_approved' | 'achievement' | 'league';
+
+export interface AppNotification {
+  id: number;
+  type: NotificationType;
+  title: string;
+  body: string;
+  taskId?: number;
+  /** M6 proposal: the league reached, so a `league` item uses that league's colour. */
+  league?: League;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationsPage {
+  items: AppNotification[];
+  nextCursor: string | null;
+}
+
+/** GET/PATCH /me/notification-settings (screen 27). */
+export interface NotificationSettings {
+  newTasks: boolean;
+  reviewResult: boolean;
+  deadlineReminder: boolean;
+  leagueUpdates: boolean;
+}
+
+/** Payload the portal puts in each push's `data`, used to deep-link a tapped notification. */
+export interface PushData {
+  notificationId?: number;
+  type?: NotificationType;
+  taskId?: number;
+}
+
 /** M4 proposal: typed activity entries for «آخر النشاطات» (icon + «+3 ساعات»). */
 export type Activity =
   | { type: 'task_approved'; text: string; at: string; hours: number }
