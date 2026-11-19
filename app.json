@@ -54,7 +54,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "نستخدم صورك لتغيير صورة ملفك أو إرفاقها في تسليم المهام.",
+          "photosPermission": "نحتاج نوصل لصورك عشان تغيّر صورتك أو ترفق صور مع تسليمك.",
           "cameraPermission": false,
           "microphonePermission": false
         }

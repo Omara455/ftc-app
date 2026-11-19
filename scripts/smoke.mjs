@@ -261,6 +261,9 @@ await step('submit: note + link → submitted state with my submission', async (
   await fill('وش أنجزت؟', 'وثّقت مسارات الدخول والمهام مع أمثلة.');
   await see('37 / 500');
   await fill('رابط العمل', 'github.com/ftcksu/portal/pull/142');
+  await tap('أضف صورة أو ملف'); // asks first: photo or file
+  await see('صورة من الألبوم');
+  await see('ملف');
   await tap('إرسال للاعتماد');
   await see('وصل تسليمك لفيصل');
   await see('github.com/ftcksu/portal/pull/142');

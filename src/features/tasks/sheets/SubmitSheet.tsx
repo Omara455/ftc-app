@@ -2,6 +2,7 @@
 // «إرسال للاعتماد» → POST /tasks/{id}/submit (multipart) → 12.
 // Also used for «تعديل التسليم» (12) and «عدّل وأعد التسليم» (13), prefilled with my submission.
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { Bell, FileText, Image as ImageIcon, Link as LinkIcon, X } from 'lucide-react-native';
 import { forwardRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -54,7 +55,36 @@ function SubmitForm({ task, onClose }: { task: Task; onClose: () => void }) {
   const submit = useSubmitTask();
   const offline = useIsOffline();
 
-  async function pick() {
+  // «أضف صورة أو ملف» first asks: «صورة من الألبوم» (photos) or «ملف» (files).
+  const [choosing, setChoosing] = useState(false);
+
+  function add(files: LocalFile[]) {
+    if (files.some((f) => f.size > FILE_MAX)) setFileError(t.fileTooBig);
+    setPicked((p) => [...p, ...files.filter((f) => f.size <= FILE_MAX)]);
+  }
+
+  async function pickPhotos() {
+    setChoosing(false);
+    setFileError(null);
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+    if (res.canceled) return;
+    add(
+      res.assets.map((a, i) => ({
+        uri: a.uri,
+        name: a.fileName ?? `photo-${i + 1}.jpg`,
+        size: a.fileSize ?? a.file?.size ?? 0,
+        mimeType: a.mimeType ?? 'image/jpeg',
+        file: a.file,
+      })),
+    );
+  }
+
+  async function pickFiles() {
+    setChoosing(false);
     setFileError(null);
     const res = await DocumentPicker.getDocumentAsync({
       multiple: true,
@@ -68,8 +98,7 @@ function SubmitForm({ task, onClose }: { task: Task; onClose: () => void }) {
       mimeType: a.mimeType ?? 'application/octet-stream',
       file: a.file,
     }));
-    if (files.some((f) => f.size > FILE_MAX)) setFileError(t.fileTooBig);
-    setPicked((p) => [...p, ...files.filter((f) => f.size <= FILE_MAX)]);
+    add(files);
   }
 
   function send() {
@@ -165,9 +194,10 @@ function SubmitForm({ task, onClose }: { task: Task; onClose: () => void }) {
           />
         ))}
         <Pressable
-          onPress={pick}
+          onPress={() => setChoosing((c) => !c)}
           accessibilityRole="button"
           accessibilityLabel={`${t.addFile} ${t.upTo}`}
+          accessibilityState={{ expanded: choosing }}
           style={({ pressed }) => [styles.add, pressed && styles.pressed]}
         >
           <ImageIcon size={18} color={color.highlight} strokeWidth={1.9} />
@@ -178,6 +208,12 @@ function SubmitForm({ task, onClose }: { task: Task; onClose: () => void }) {
             {t.upTo}
           </Txt>
         </Pressable>
+        {choosing ? (
+          <View style={styles.choice} accessibilityRole="menu">
+            <ChoiceRow icon={ImageIcon} label={t.fromAlbum} onPress={pickPhotos} />
+            <ChoiceRow icon={FileText} label={t.file} onPress={pickFiles} divider />
+          </View>
+        ) : null}
         {fileError ? (
           <Txt size={12.5} weight="regular" color={color.dangerText}>
             {fileError}
@@ -201,6 +237,35 @@ function SubmitForm({ task, onClose }: { task: Task; onClose: () => void }) {
         disabled={!note.trim()}
       />
     </>
+  );
+}
+
+function ChoiceRow({
+  icon: Icon,
+  label,
+  onPress,
+  divider,
+}: {
+  icon: typeof FileText;
+  label: string;
+  onPress: () => void;
+  divider?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="menuitem"
+      style={({ pressed }) => [
+        styles.choiceRow,
+        divider && styles.choiceDivider,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Icon size={18} color={color.accent} strokeWidth={1.9} />
+      <Txt size={14} weight="semibold" color={color.ink}>
+        {label}
+      </Txt>
+    </Pressable>
   );
 }
 
@@ -284,5 +349,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pressed: { opacity: 0.85 },
+  // «صورة من الألبوم» / «ملف» (not in the design; approved in review of PR #5)
+  choice: {
+    borderRadius: radius.md,
+    backgroundColor: color.bg,
+    borderWidth: 1,
+    borderColor: color.line,
+  },
+  choiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 48,
+    paddingHorizontal: 14,
+  },
+  choiceDivider: { borderTopWidth: 1, borderTopColor: color.line },
   reviewer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });
