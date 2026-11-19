@@ -2,7 +2,7 @@
 
 **Read this first in a new session**, after `CLAUDE.md`. It records what's built, every decision the project owner has approved, what's still open, and what comes next. Keep it up to date at the end of every milestone.
 
-Last updated: 2026-11-19, M5 built on `m5-writes` (PR open, not merged).
+Last updated: 2026-11-19, M5 review applied on `m5-writes` (PR #5, not merged yet).
 
 ---
 
@@ -15,7 +15,7 @@ Last updated: 2026-11-19, M5 built on `m5-writes` (PR open, not merged).
 | M2 Auth and shell | 01–05, 30 | #2 | ✅ merged |
 | M3 Tasks (read) | 06, 07, 10, 12, 13, 15, 16, 18, 19 | #3 | ✅ merged |
 | M4 Community, Leaderboard, Account | 20–27, **29** (pulled forward) | #4 | ✅ merged |
-| **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5 | **in review** |
+| **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5 | **approved, awaiting merge** |
 | M6 Notifications (Phase 2) | 05 (`POST /devices`), 17, 27 toggles | — | after M5 |
 
 Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against `/api/mobile/v1` on staging. The Phase 1 screens are all built. That release needs the portal team's API (see §4) and an on-device check.
@@ -109,6 +109,32 @@ Match the person referred to. Examples already built: «أنشأها / أنشأ�
   - Stored on the device only; the row is hidden when there's no hardware, and on web.
 - **Mock data** shows 3 «مهامي» items (incl. a submitted one), against the artboard's 2. That's fine.
 
+### M5 writes (approved in review of PR #5)
+- **Sheets are components, not routes:** `src/features/tasks/sheets/{Join,Leave,Submit}Sheet.tsx`, presented from the screen underneath (like Logout and Change password).
+- **09 for event tasks** (`timeFrom` set, event not over) follows its artboard:
+  - chips: shared, state, hours (no committee or deadline chip; the date line repeats the date)
+  - stepper: انضممت → الفعالية → التسليم → الاعتماد
+  - «المنضمّين  3 من 4» with «أنت، سلمان، ومحمد»
+  - a locked «التسليم بعد الفعالية» while `canSubmit` is false
+  - **The description card stays** below (not in the artboard).
+  - Non-event tasks get the toast on top of the normal 10 layout.
+- **The toast** shows until you leave the task screen (`src/lib/flash.ts`). Joining from a Tasks card opens the task with the toast.
+- **Submit (11):**
+  - «إرسال للاعتماد» stays disabled until the note has text.
+  - **«أضف صورة أو ملف» asks first:** an inline menu offers «صورة من الألبوم» (`expo-image-picker`) or «ملف» (`expo-document-picker`). It's inline rather than a native alert, which doesn't work on web.
+  - «تم الرفع» only shows on files already on the server (edit/resubmit). New files show their size only, because they upload with the submission.
+- **Edit profile (28):**
+  - «حفظ» and «إلغاء» go back to wherever it was opened from (`router.back()`), which is Settings today.
+  - Unchanged → «حفظ» just goes back.
+  - Offline → «حفظ» is locked and the photo can't be changed.
+- **Leave (14)** goes back to Tasks, where the task is under «متاحة للجنتك» again straight away.
+- **Android back** closes any open sheet.
+- **Copy (not in the design, approved):**
+  - file too big: «الملف أكبر من 10 ميقا، اختر ملف أصغر.» («م.ب» reads awkwardly in a sentence; it stays in sizes like «1.2 م.ب»)
+  - 409 on join: «ما بقى مكان في هالمهمة.»
+  - 403: «ما تقدر تسوي هذا على هالمهمة الحين.»
+  - iOS photos permission (`app.json`): «نحتاج نوصل لصورك عشان تغيّر صورتك أو ترفق صور مع تسليمك.»
+
 ### Layout
 - `notifications-permission.tsx` lives at the `app/` root, on the signed-in side of the gate.
 - Logout is a component sheet (`src/features/auth/LogoutSheet.tsx`).
@@ -151,43 +177,17 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 - [ ] **Device check on Android**, by the owner (`docs/DEVICE.md`). Nothing reported yet.
 - [ ] **Committee names** for projects and finance: to be confirmed with the club.
 - [ ] **Android package name:** confirm `com.ftcksu.app` before release.
-- [ ] **Portal team:** review and implement the M3/M4/M5 API proposals and the Phase 2 endpoints.
-- [ ] **M5 review:** the choices and copy listed in §5.
+- [ ] **Portal team:** review and implement the M3/M4/M5 API proposals (the owner is passing the M5 ones on) and the Phase 2 endpoints.
 
 **Possible later features** (not planned, don't build without asking):
 - Offline submission queue: save a submission made offline and send it when the connection returns. Would need new screen-19 copy.
 
 ---
 
-## 5. M5 in review, then M6
+## 5. Next: M6, notifications (Phase 2)
 
-**M5 (branch `m5-writes`, PR open)** built screens 08, 09, 11, 14 and 28 behind `flags.writes`. The choices below are **waiting for the owner's review**. Move them into §2 once approved.
-- **Sheets are components, not routes:** `src/features/tasks/sheets/{Join,Leave,Submit}Sheet.tsx`, like Logout and Change password. CLAUDE.md's layout is updated.
-- **09 for event tasks** (`timeFrom` set, event not over) follows its artboard:
-  - chips: shared, state, hours (no committee or deadline chip; the date line repeats the date)
-  - stepper: انضممت → الفعالية → التسليم → الاعتماد
-  - «المنضمّين  3 من 4» with «أنت، سلمان، ومحمد»
-  - a locked «التسليم بعد الفعالية» while `canSubmit` is false
-  - The description card stays below (not in the artboard).
-  - Non-event tasks get the toast on top of the normal 10 layout.
-- **The toast** shows until you leave the task screen (`src/lib/flash.ts`). Joining from a Tasks card opens the task with the toast.
-- **Submit (11):**
-  - «إرسال للاعتماد» stays disabled until the note has text.
-  - Files come from `expo-document-picker` (**new dependency**). On iOS that opens Files, not Photos.
-  - «تم الرفع» only shows on files already on the server (edit/resubmit). New files show their size only, because they upload with the submission.
-- **Edit profile (28):**
-  - «حفظ» goes back to Settings (the artboard links to Account).
-  - Unchanged → «حفظ» just goes back.
-  - Offline → «حفظ» is locked and the photo can't be changed.
-- **Leave (14)** goes back to Tasks, where the task is under «متاحة للجنتك» again straight away.
-- **Copy not in the design, needs sign-off:**
-  - «الملف أكبر من 10 م.ب، اختر ملف أصغر.»
-  - «ما بقى مكان في هالمهمة.» (409)
-  - «ما تقدر تسوي هذا على هالمهمة الحين.» (403)
-  - the iOS photos permission text in `app.json`
-- **Android back** closes any open sheet (added to `Sheet`).
+M5 is waiting for PR #5 to be merged. Check with `gh pr view 5 --json state` before branching for M6.
 
-**Next: M6**
 - Register the Expo push token (`POST /devices`).
 - Deep links from notifications, using the type → screen map in SCREENS.md.
 - Notifications list (17) with mark-as-read.

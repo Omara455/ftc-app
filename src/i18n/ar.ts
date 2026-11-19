@@ -281,12 +281,15 @@ export const ar = {
     upTo: '· حتى 10 م.ب',
     uploaded: 'تم الرفع',
     removeFile: 'إزالة الملف',
+    // «أضف صورة أو ملف» choice — not in the design, approved in review of PR #5
+    fromAlbum: 'صورة من الألبوم',
+    file: 'ملف',
     /** «يراجعها فيصل، ويوصلك إشعار بالنتيجة.» / «تراجعها هيفاء، …» (reviewer's gender) */
     reviewer: (name: string, gender: 'male' | 'female') =>
       `${gender === 'female' ? 'تراجعها' : 'يراجعها'} ${name}، ويوصلك إشعار بالنتيجة.`,
     send: 'إرسال للاعتماد',
-    // Not in the design — need sign-off (M5):
-    fileTooBig: 'الملف أكبر من 10 م.ب، اختر ملف أصغر.',
+    // Not in the design — approved in review of PR #5:
+    fileTooBig: 'الملف أكبر من 10 ميقا، اختر ملف أصغر.',
     taskFull: 'ما بقى مكان في هالمهمة.',
     notAllowed: 'ما تقدر تسوي هذا على هالمهمة الحين.',
   },
