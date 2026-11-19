@@ -2,7 +2,7 @@
 
 **Read this first in a new session**, after `CLAUDE.md`. It records what's built, every decision the project owner has approved, what's still open, and what comes next. Keep it up to date at the end of every milestone.
 
-Last updated: 2026-11-19, M5 review applied on `m5-writes` (PR #5, not merged yet).
+Last updated: 2026-11-19, after M5 was merged (PR #5) and its review follow-up opened (PR #6).
 
 ---
 
@@ -15,7 +15,7 @@ Last updated: 2026-11-19, M5 review applied on `m5-writes` (PR #5, not merged ye
 | M2 Auth and shell | 01–05, 30 | #2 | ✅ merged |
 | M3 Tasks (read) | 06, 07, 10, 12, 13, 15, 16, 18, 19 | #3 | ✅ merged |
 | M4 Community, Leaderboard, Account | 20–27, **29** (pulled forward) | #4 | ✅ merged |
-| **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5 | **approved, awaiting merge** |
+| **M5 Writes (Phase 2)** | 08, 09, 11, 14, 28 | #5, #6 | ✅ #5 merged · #6 (review follow-up) open |
 | M6 Notifications (Phase 2) | 05 (`POST /devices`), 17, 27 toggles | — | after M5 |
 
 Phase 1 release (PLAN.md) means an internal TestFlight / APK through EAS against `/api/mobile/v1` on staging. The Phase 1 screens are all built. That release needs the portal team's API (see §4) and an on-device check.
@@ -186,7 +186,7 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 
 ## 5. Next: M6, notifications (Phase 2)
 
-M5 is waiting for PR #5 to be merged. Check with `gh pr view 5 --json state` before branching for M6.
+M5 is merged (PR #5). Its review follow-up is PR #6: check `gh pr view 6 --json state` says MERGED before branching for M6.
 
 - Register the Expo push token (`POST /devices`).
 - Deep links from notifications, using the type → screen map in SCREENS.md.
