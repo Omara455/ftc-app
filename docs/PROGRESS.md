@@ -70,6 +70,7 @@ These are settled. Don't re-ask; follow them.
   - Network error: reuses «ما فيه اتصال بالإنترنت»
   - Search with no results: «ما لقينا أحد بهالاسم.»
   - Deadline due today: «آخر يوم»; overdue: «متأخرة»
+- **Offline writes notice (screen 19, updated design):** «الانضمام والتسليم يحتاجون اتصال. جرّبهم أول ما يرجع الإنترنت.» There is no offline submit queue; writes are simply locked while offline.
 - **Committee name:** «إدارة المشاريع», as in the design, with the "verify against portal" comment. The owner will confirm the real projects and finance names with the club.
 
 ### Arabic number agreement: everywhere, overriding artboards
@@ -146,7 +147,9 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 - [ ] **Committee names** for projects and finance: to be confirmed with the club.
 - [ ] **Android package name:** confirm `com.ftcksu.app` before release.
 - [ ] **Portal team:** review and implement the M3/M4 API proposals and the Phase 2 endpoints.
-- [ ] **Offline submit promise.** The screen-19 copy «نحفظ لك أي تسليم وترسله أول ما يرجع الاتصال» promises a queued offline submit. **Decide in M5** whether to build the queue or ask to change the copy.
+
+**Possible later features** (not planned, don't build without asking):
+- Offline submission queue: save a submission made offline and send it when the connection returns. Would need new screen-19 copy.
 
 ---
 
@@ -155,7 +158,7 @@ When the real API lands, switching should only mean setting `EXPO_PUBLIC_API_BAS
 From `docs/PLAN.md`: screens **08** join confirm, **09** joined (toast + working state), **11** submit, **14** leave confirm, **28** edit profile. Screen 29 is already done.
 - **Calls:** `POST /tasks/{id}/claim`, `/leave` and `/submit` (multipart: `note` ≤500, `link?`, `files[]?`); `PATCH /me` (`bio` ≤160, `photo?`, **only these two**).
 - **Data flow:** use optimistic updates, then invalidate `['tasks']` and `['me']`. A 409 on claim means the task is full or already joined.
-- **Offline:** disable every write offline with the locked `Button`. `LockedNotice` already exists.
+- **Offline:** disable every write offline with the locked `Button`. `LockedNotice` already exists. No offline queue (decided).
 - **Routes:** the sheets go in `app/(sheets)/join/[id].tsx`, `leave/[id].tsx` and `submit/[id].tsx` (CLAUDE.md layout). The existing sticky CTAs in `app/(tabs)/tasks/[id].tsx` (`Cta`) and the join button on `AvailableTaskCard` are already behind `flags.writes`; wire them to these sheets.
 - **Edit profile (28):** «حفظ» / «إلغاء» in the header, `expo-image-picker` (not installed yet; use `npx expo install`), bio limited to 160 characters. Name, university ID and committee are read-only, with the HR note.
 - **Steps:** read the artboards first (`JoinConfirm`, `TaskJoined`, `SubmitTask`, `LeaveConfirm`, `EditProfile`), add the mock routes, then extend smoke.

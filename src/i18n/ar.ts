@@ -254,6 +254,7 @@ export const ar = {
     /** «آخر تحديث قبل 10 دقائق» — `ago` is already phrased («قبل 10 دقائق», «الحين») */
     lastUpdated: (ago: string) => `آخر تحديث ${ago}`,
     retry: 'حاول مجددًا',
-    writesLocked: 'الانضمام والتسليم يحتاجون اتصال. نحفظ لك أي تسليم وترسله أول ما يرجع الاتصال.',
+    /** Updated screen 19 copy (approved): no offline submit queue */
+    writesLocked: 'الانضمام والتسليم يحتاجون اتصال. جرّبهم أول ما يرجع الإنترنت.',
   },
 } as const;
