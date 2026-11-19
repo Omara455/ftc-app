@@ -42,7 +42,7 @@ How the FTC app gets from this repo to members' phones: builds, versions, over-t
    - Set `EXPO_PUBLIC_SENTRY_DSN` as an EAS environment variable for `preview` and `production`.
    - For readable stack traces, set `SENTRY_AUTH_TOKEN` (a secret), `SENTRY_ORG` and `SENTRY_PROJECT` in EAS. The `@sentry/react-native` plugin then uploads source maps on each build.
    - Reports are off in mock mode and on web. No user identity, request bodies, query strings or auth headers are sent (`src/lib/sentry.ts`).
-7. **Privacy policy URL:** publish §6 at e.g. `https://ftcksu.com/privacy`. Both stores require a public URL.
+7. **Privacy policy URL:** publish §6 at e.g. `https://ftcksu.com/privacy`, **only after the PDPL review** (§6). Both stores require a public URL.
 
 ## 3. Release checklist (every store release)
 
@@ -52,6 +52,7 @@ How the FTC app gets from this repo to members' phones: builds, versions, over-t
 - [ ] Flags are what this release should have. Phase 2 stays off until its endpoints are live (§8).
 - [ ] The production API URL answers (`GET /me` with a test account).
 - [ ] Copy changes approved by the club.
+- [ ] The published privacy policy has been reviewed by the club or the university against the PDPL (§6), and matches what this release does.
 
 **Build and test**
 - [ ] `eas build --profile preview --platform all`. Install it on at least one Android phone and one iPhone.
@@ -132,6 +133,8 @@ Optional: a short Arabic caption above each screenshot (e.g. «كل مهامك �
 ## 6. Privacy policy (Arabic draft)
 
 > Draft for the club to review and publish. Replace `[بريد النادي]` with the club's contact email.
+
+> **⚠️ PDPL review required before publishing.** The club or the university must review this policy against Saudi Arabia's **Personal Data Protection Law (PDPL)** and its implementing regulations before it's published or submitted to either store. That includes the lawful basis for processing, the data subject rights and how to exercise them, retention periods, and transfers outside the Kingdom (Sentry and Expo's push service are hosted abroad). Don't publish this draft as-is.
 
 ```
 سياسة الخصوصية لتطبيق نادي تقنية المستقبل (FTC)
